@@ -1,0 +1,8 @@
+Este diretório armazenará imagens para a plataforma Kognia One.
+
+Imagens que devem ser incluídas:
+- Logo da Kognia
+- Ícones de interface
+- Imagens de fundo
+- Avatares padrão
+- Imagens para documentação

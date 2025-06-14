@@ -1,0 +1,110 @@
+/* Kognia One Custom CSS */
+
+/* Cores principais */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --accent-color: #e74c3c;
+    --background-color: #f9f9f9;
+    --text-color: #333333;
+}
+
+/* Estilo geral */
+body {
+    font-family: 'Lato', 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text-color);
+    background-color: var(--background-color);
+}
+
+/* Customização do Streamlit */
+.stApp {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Customização do header */
+.stHeader {
+    background-color: white;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+/* Chat container */
+.chat-container {
+    height: 400px;
+    overflow-y: auto;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+/* Mensagens do chat */
+.user-message {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 15px 15px 0 15px;
+    margin-bottom: 0.5rem;
+    max-width: 80%;
+    align-self: flex-end;
+}
+
+.bot-message {
+    background-color: #f1f1f1;
+    padding: 0.5rem 1rem;
+    border-radius: 15px 15px 15px 0;
+    margin-bottom: 0.5rem;
+    max-width: 80%;
+    align-self: flex-start;
+}
+
+/* Cards personalizados */
+.ui.card {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.ui.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Botões personalizados */
+.ui.button {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.ui.button:hover {
+    background-color: #2980b9;
+}
+
+/* Tema escuro */
+.dark-theme {
+    --background-color: #1a1a1a;
+    --text-color: #f1f1f1;
+}
+
+.dark-theme .stApp {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.dark-theme .ui.card {
+    background-color: #2a2a2a;
+    color: var(--text-color);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .ui.three.cards {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .ui.card {
+        width: 100% !important;
+        margin-bottom: 1rem;
+    }
+}

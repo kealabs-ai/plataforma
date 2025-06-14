@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Frontend - Streamlit
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../frontend:/app
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    networks:
+      - kognia-network
+    restart: unless-stopped
+
+  # API - FastAPI
+  api:
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../api:/app
+      - ../backend:/app/backend
+      - ../llms:/app/llms
+      - ../agents:/app/agents
+    environment:
+      - DB_HOST=http://127.0.0.1
+      - DB_PORT=3306
+      - DB_USER=${DB_USER:root}
+      - DB_PASSWORD=${DB_PASSWORD:""}
+      - DB_NAME=${DB_NAME:kognia_one_db}
+      - REDIS_HOST=redis
+      - APP_SECRET_KEY=${APP_SECRET_KEY:-your_app_secret_key}
+    depends_on:
+      - db
+      - redis
+    networks:
+      - kognia-network
+    restart: unless-stopped
+
+  # Banco de dados MySQL
+  db:
+    image: mysql:5.6.23
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ../database/migrations:/docker-entrypoint-initdb.d/migrations
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root_password}
+      - MYSQL_DATABASE=${DB_NAME:-kognia_one_db}
+      - MYSQL_USER=${DB_USER:root}
+      - MYSQL_PASSWORD=${DB_PASSWORD:""}
+    networks:
+      - kognia-network
+    restart: unless-stopped
+
+  # Redis para cache e filas
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - kognia-network
+    restart: unless-stopped
+
+networks:
+  kognia-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
