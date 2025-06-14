@@ -1,0 +1,38 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+}
+
+.login-box {
+    width: 800px;
+    display: flex;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.logo-container {
+    flex: 1;
+    background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.form-container {
+    flex: 1;
+    padding: 40px;
+}
+
+.ui.form .field {
+    margin-bottom: 20px;
+}
+
+.links-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
