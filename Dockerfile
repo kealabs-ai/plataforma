@@ -13,4 +13,4 @@ COPY . .
 EXPOSE 8000
 
 # Comando para iniciar a aplicação
-CMD ["uvicorn", "api.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

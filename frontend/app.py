@@ -16,10 +16,17 @@ st.set_page_config(
 
 # Carrega CSS personalizado do Semantic UI
 def load_css():
-    with open(os.path.join(os.path.dirname(__file__), "static", "semantic-ui", "semantic.min.css")) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-    with open(os.path.join(os.path.dirname(__file__), "static", "custom.css")) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    # Carrega Semantic UI do CDN (fallback caso os arquivos locais não existam)
+    st.markdown("""
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    """, unsafe_allow_html=True)
+    
+    # Carrega CSS personalizado
+    css_file = os.path.join(os.path.dirname(__file__), "static", "custom.css")
+    if os.path.exists(css_file):
+        with open(css_file) as f:
+            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 # Função para chamar a API
 def call_api(endpoint, method="GET", data=None):
@@ -40,8 +47,11 @@ def call_api(endpoint, method="GET", data=None):
 # Sidebar para navegação
 def sidebar():
     with st.sidebar:
-        st.image(os.path.join(os.path.dirname(__file__), "static", "images", "logo.png"), width=200)
-        st.title("Kognia One")
+        logo_path = os.path.join(os.path.dirname(__file__), "static", "images", "logo.png")
+        if os.path.exists(logo_path):
+            st.image(logo_path, width=200)
+        else:
+            st.title("Kognia One")
         
         menu_option = st.radio(
             "Menu",

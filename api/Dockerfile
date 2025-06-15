@@ -4,7 +4,8 @@ WORKDIR /app
 
 # Instala dependências
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install email-validator pymysql
 
 # Copia arquivos da aplicação
 COPY . .
@@ -12,5 +13,8 @@ COPY . .
 # Expõe a porta da API
 EXPOSE 8000
 
+# Define variável de ambiente para indicar que está rodando em Docker
+ENV DOCKER_ENV=true
+
 # Comando para iniciar a aplicação
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["python", "main.py"]

@@ -13,11 +13,19 @@ load_dotenv()
 # Configuração do banco de dados
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "3306")
-DB_USER = os.getenv("DB_USER", "kognia_user")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "your_password")
-DB_NAME = os.getenv("DB_NAME", "kognia_db")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "kognia_one_db")
 
-DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# Verifica se a porta é válida
+if not DB_PORT:
+    DB_PORT = "3306"
+
+# Constrói a URL de conexão com o banco de dados
+if DB_PASSWORD:
+    DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+else:
+    DATABASE_URL = f"mysql+pymysql://{DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # Criação do engine SQLAlchemy
 engine = create_engine(DATABASE_URL)

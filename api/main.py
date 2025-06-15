@@ -103,4 +103,10 @@ async def get_status():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("API_PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    # Para execução local, use a string de importação
+    if os.getenv("DOCKER_ENV") == "true":
+        # No Docker, use o objeto app diretamente
+        uvicorn.run(app, host="0.0.0.0", port=port)
+    else:
+        # Fora do Docker, use a string de importação para habilitar o reload
+        uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

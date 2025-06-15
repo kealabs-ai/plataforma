@@ -1,0 +1,46 @@
+# Arquivos e diretórios a serem ignorados pelo Docker
+
+# Arquivos de sistema
+.git
+.gitignore
+.DS_Store
+Thumbs.db
+
+# Ambientes virtuais
+venv/
+env/
+.env/
+.venv/
+
+# Arquivos de cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Arquivos de log
+*.log
+logs/
+
+# Arquivos temporários
+*.tmp
+*.temp
+.temp/
+tmp/
+
+# Arquivos de IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Arquivos de documentação
+docs/
+*.md
+!README.md
+
+# Outros
+node_modules/
+.npm
+.yarn
