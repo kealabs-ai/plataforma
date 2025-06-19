@@ -13,6 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.database import get_db, Database
 from backend.models import UserCreate, User, LLMRequest, LLMResponse
 from backend.auth import create_access_token, get_current_user
+from workflows import N8NWorkflowManager
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -35,6 +36,9 @@ app.add_middleware(
 
 # Esquema de autenticação OAuth2
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# Inicializa o gerenciador de workflows n8n
+workflow_manager = N8NWorkflowManager()
 
 # Rotas de autenticação
 @app.post("/token")
@@ -93,6 +97,34 @@ async def run_agent(
         return {"result": result, "agent": agent_name}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Rotas para workflows n8n
+@app.post("/workflows/{workflow_id}/trigger")
+async def trigger_workflow(
+    workflow_id: str,
+    data: Dict[str, Any],
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Aciona um workflow no n8n
+    """
+    result = workflow_manager.trigger_workflow(workflow_id, data)
+    if not result:
+        raise HTTPException(status_code=500, detail="Erro ao acionar workflow")
+    return result
+
+@app.get("/workflows/execution/{execution_id}")
+async def get_workflow_status(
+    execution_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Obtém o status de execução de um workflow
+    """
+    result = workflow_manager.get_workflow_status(execution_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Execução não encontrada")
+    return result
 
 # Rota de status
 @app.get("/status")

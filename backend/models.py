@@ -77,3 +77,12 @@ class AgentResponse(BaseModel):
     result: Any
     agent: str
     metadata: Optional[Dict[str, Any]] = None
+    
+class WorkflowRequest(BaseModel):
+    workflow_id: str
+    data: Dict[str, Any]
+    
+class WorkflowResponse(BaseModel):
+    execution_id: str
+    status: str
+    data: Optional[Dict[str, Any]] = None

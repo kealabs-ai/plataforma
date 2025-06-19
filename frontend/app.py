@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import os
 from dotenv import load_dotenv
+from workflows import workflow_page
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -55,7 +56,7 @@ def sidebar():
         
         menu_option = st.radio(
             "Menu",
-            ["Dashboard", "Assistente IA", "Configurações", "Sobre"]
+            ["Dashboard", "Assistente IA", "Workflows", "Configurações", "Sobre"]
         )
         
         st.markdown("---")
@@ -175,6 +176,8 @@ def main():
         dashboard_page()
     elif menu_option == "Assistente IA":
         ai_assistant_page()
+    elif menu_option == "Workflows":
+        workflow_page()
     elif menu_option == "Configurações":
         settings_page()
     elif menu_option == "Sobre":
