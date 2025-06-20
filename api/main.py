@@ -7,7 +7,9 @@ import sys
 from dotenv import load_dotenv
 
 # Adiciona o diretório raiz ao path para importações relativas
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
 
 # Importa módulos do backend
 from backend.database import get_db, Database
@@ -28,7 +30,7 @@ app = FastAPI(
 # Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em produção, especificar origens permitidas
+    allow_origins=["*"],  # Permitir todas as origens em ambiente de desenvolvimento
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,7 +42,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 # Inicializa o gerenciador de workflows n8n
 workflow_manager = N8NWorkflowManager()
 
-# Rotas de autenticação
+# Mantém a rota de token na raiz para compatibilidade
 @app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     db = get_db()
@@ -98,38 +100,10 @@ async def run_agent(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Rotas para workflows n8n
-@app.post("/workflows/{workflow_id}/trigger")
-async def trigger_workflow(
-    workflow_id: str,
-    data: Dict[str, Any],
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Aciona um workflow no n8n
-    """
-    result = workflow_manager.trigger_workflow(workflow_id, data)
-    if not result:
-        raise HTTPException(status_code=500, detail="Erro ao acionar workflow")
-    return result
-
-@app.get("/workflows/execution/{execution_id}")
-async def get_workflow_status(
-    execution_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Obtém o status de execução de um workflow
-    """
-    result = workflow_manager.get_workflow_status(execution_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Execução não encontrada")
-    return result
-
 # Rota de status
 @app.get("/status")
 async def get_status():
-    return {"status": "online", "version": "1.0.0"}
+    return {"status": "online", "version": "1.0.0", "message": "API is running correctly"}
 
 # Inicialização da aplicação
 if __name__ == "__main__":

@@ -36,11 +36,14 @@ def call_api(endpoint, method="GET", data=None):
     
     try:
         if method == "GET":
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
         elif method == "POST":
-            response = requests.post(url, json=data)
+            response = requests.post(url, json=data, timeout=10)
         response.raise_for_status()
         return response.json()
+    except requests.exceptions.ConnectionError as e:
+        st.error(f"Erro de conexão com a API: Verifique se a API está em execução em {api_url}")
+        return None
     except Exception as e:
         st.error(f"Erro ao chamar API: {str(e)}")
         return None

@@ -24,5 +24,6 @@ echo Projeto Kognia One iniciado com sucesso!
 echo.
 echo Frontend: http://localhost:8501
 echo API: http://localhost:8000
+echo n8n: http://localhost:5678 (admin/admin123)
 echo.
 echo Para parar o projeto, execute: docker-compose down

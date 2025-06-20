@@ -1,38 +1,144 @@
+/* Estilos para a tela de autenticação do Kognia One */
+
+/* Página completa */
+.login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Lato', sans-serif;
+    padding: 20px;
+}
+
+/* Container do logo no topo */
+.top-logo-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+}
+
+/* Imagem do logo no topo */
+.top-logo-image {
+    max-width: 250px;
+    max-height: 100px;
+    object-fit: contain;
+}
+
+/* Container principal */
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 80vh;
+    width: 100%;
+    flex: 1;
 }
 
+/* Box de login */
 .login-box {
-    width: 800px;
-    display: flex;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 400px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     border-radius: 10px;
     overflow: hidden;
+    background-color: #ffffff;
 }
 
-.logo-container {
-    flex: 1;
-    background-color: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
+/* Container do formulário */
 .form-container {
-    flex: 1;
     padding: 40px;
+    background-color: #ffffff;
 }
 
+/* Cabeçalho do formulário */
+.ui.header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+/* Campos do formulário */
 .ui.form .field {
     margin-bottom: 20px;
 }
 
+.ui.form .field label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+/* Inputs com ícones */
+.ui.left.icon.input {
+    width: 100%;
+}
+
+.ui.left.icon.input input {
+    padding-left: 3em !important;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.ui.left.icon.input i.icon {
+    opacity: 0.6;
+}
+
+/* Botão de login */
+.ui.primary.button {
+    background-color: #3498db;
+    color: white;
+    margin-top: 10px;
+    padding: 12px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.ui.primary.button:hover {
+    background-color: #2980b9;
+}
+
+/* Container de links */
 .links-container {
     display: flex;
     justify-content: space-between;
-    margin-top: 20px;
+    margin-top: 25px;
+    font-size: 0.9em;
+    padding: 0 5px;
+}
+
+.links-container a {
+    color: #3498db;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.links-container a i {
+    margin-right: 5px;
+}
+
+.links-container a:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+/* Mensagem de erro */
+.ui.error.message {
+    margin-bottom: 15px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .login-box {
+        width: 90%;
+    }
+    
+    .form-container {
+        padding: 30px;
+    }
+    
+    .top-logo-image {
+        max-width: 200px;
+    }
 }

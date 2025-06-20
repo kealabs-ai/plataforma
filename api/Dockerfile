@@ -2,19 +2,19 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Instala dependências
+# Install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install email-validator pymysql
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia arquivos da aplicação
+# Copy application files
 COPY . .
 
-# Expõe a porta da API
+# Expose API port
 EXPOSE 8000
 
-# Define variável de ambiente para indicar que está rodando em Docker
+# Set environment variables
 ENV DOCKER_ENV=true
+ENV API_PORT=8000
 
-# Comando para iniciar a aplicação
-CMD ["python", "main.py"]
+# Start the application
+CMD ["python", "test_api.py"]

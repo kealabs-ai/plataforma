@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui/dist/semantic.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <title>Kognia One - Área de Visitantes</title>
+</head>
+<body>
+    <div class="ui container" style="margin-top: 20px; max-width: 800px;">
+        <div class="ui segment">
+            <div class="ui center aligned">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logotipo da Kognia One" style="max-height: 100px; margin-bottom: 20px;">
+            </div>
+            
+            <h1 class="ui header">Área de Visitantes</h1>
+            <p>Bem-vindo à plataforma Kognia One!</p>
+            <p>Aqui você pode explorar algumas funcionalidades disponíveis para visitantes.</p>
+            
+            <h3 class="ui header">Recursos disponíveis</h3>
+            <div class="ui bulleted list">
+                <div class="item">Demonstrações interativas</div>
+                <div class="item">Informações sobre a plataforma</div>
+                <div class="item">Contato para mais informações</div>
+            </div>
+            
+            <div class="ui divider"></div>
+            
+            <a href="{{ url_for('login') }}" class="ui primary button">
+                <i class="arrow left icon"></i> Voltar ao login
+            </a>
+        </div>
+    </div>
+</body>
+</html>

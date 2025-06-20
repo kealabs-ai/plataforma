@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Frontend - Streamlit
+  # Frontend - Flask
   frontend:
     build:
       context: ./frontend
@@ -12,6 +12,8 @@ services:
       - ./frontend:/app
     environment:
       - API_URL=http://api:8000
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
     depends_on:
       - api
     networks:
@@ -36,42 +38,14 @@ services:
       - DB_USER=root
       - DB_PASSWORD=root_password
       - DB_NAME=kognia_one_db
-      - REDIS_HOST=redis
       - API_PORT=8000
       - APP_SECRET_KEY=your_app_secret_key
       - DOCKER_ENV=true
       - N8N_URL=http://n8n:5678
+      - N8N_API_KEY=
     depends_on:
       - db
-      - redis
-    networks:
-      - kognia-network
-    restart: unless-stopped
-
-  # n8n - Workflow Automation
-  n8n:
-    image: n8nio/n8n:0.234.0
-    ports:
-      - "5678:5678"
-    volumes:
-      - n8n-data:/home/node/.n8n
-    environment:
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - N8N_HOST=n8n
-      - DB_TYPE=mysqldb
-      - DB_MYSQLDB_HOST=db
-      - DB_MYSQLDB_PORT=3306
-      - DB_MYSQLDB_DATABASE=n8n_db
-      - DB_MYSQLDB_USER=root
-      - DB_MYSQLDB_PASSWORD=root_password
-      - WEBHOOK_URL=http://localhost:5678/
-      - N8N_ENCRYPTION_KEY=your_encryption_key_here
-      - N8N_DIAGNOSTICS_ENABLED=false
-      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
-      - GENERIC_TIMEZONE=UTC
-    depends_on:
-      - db
+      - n8n
     networks:
       - kognia-network
     restart: unless-stopped
@@ -83,7 +57,8 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
+      - ./init-n8n-db.sql:/docker-entrypoint-initdb.d/02-init-n8n-db.sql
     environment:
       - MYSQL_ROOT_PASSWORD=root_password
       - MYSQL_DATABASE=kognia_one_db
@@ -93,13 +68,30 @@ services:
       - kognia-network
     restart: unless-stopped
 
-  # Redis para cache e filas
-  redis:
-    image: redis:6-alpine
+  # n8n - Workflow Automation
+  n8n:
+    image: n8nio/n8n:1.17.1
     ports:
-      - "6379:6379"
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - DB_TYPE=mysqldb
+      - DB_MYSQLDB_HOST=db
+      - DB_MYSQLDB_PORT=3306
+      - DB_MYSQLDB_DATABASE=n8n_db
+      - DB_MYSQLDB_USER=root
+      - DB_MYSQLDB_PASSWORD=root_password
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
     volumes:
-      - redis-data:/data
+      - n8n-data:/home/node/.n8n
+    depends_on:
+      - db
     networks:
       - kognia-network
     restart: unless-stopped
@@ -110,5 +102,4 @@ networks:
 
 volumes:
   mysql-data:
-  redis-data:
   n8n-data:

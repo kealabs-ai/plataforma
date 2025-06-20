@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui/dist/semantic.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <title>Kognia One - Login</title>
+</head>
+<body>
+    <div class="login-page">
+        <div class="top-logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logotipo da Kognia One" class="top-logo-image">
+        </div>
+        
+        <div class="login-container">
+            <div class="login-box">
+                <div class="form-container">
+                    <h2 class="ui header">Login</h2>
+                    
+                    {% if error %}
+                    <div class="ui error message">
+                        <div class="header">Erro de autenticação</div>
+                        <p>{{ error }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <form class="ui form" method="POST">
+                        <div class="field">
+                            <label>Usuário</label>
+                            <div class="ui left icon input">
+                                <input type="text" name="username" placeholder="Nome de usuário">
+                                <i class="user icon"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <label>Senha</label>
+                            <div class="ui left icon input">
+                                <input type="password" name="password" placeholder="Senha">
+                                <i class="lock icon"></i>
+                            </div>
+                        </div>
+                        
+                        <button class="ui primary fluid button" type="submit">Entrar</button>
+                    </form>
+                    
+                    <div class="links-container">
+                        <a href="{{ url_for('forgot_password') }}"><i class="key icon"></i> Esqueci minha senha</a>
+                        <a href="{{ url_for('visitor') }}"><i class="external alternate icon"></i> Visitante</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui/dist/semantic.min.js"></script>
+</body>
+</html>

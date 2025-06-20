@@ -11,10 +11,10 @@ from .models import UserCreate, User, UserInDB
 load_dotenv()
 
 # Configuração do banco de dados
-DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_HOST = os.getenv("DB_HOST", "http://localhost")
 DB_PORT = os.getenv("DB_PORT", "3306")
 DB_USER = os.getenv("DB_USER", "root")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "root_password")
 DB_NAME = os.getenv("DB_NAME", "kognia_one_db")
 
 # Verifica se a porta é válida
