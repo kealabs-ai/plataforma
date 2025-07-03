@@ -1,0 +1,466 @@
+/* Keyframes para animação de fade-in e slide-up */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estilos globais para o corpo da página */
+body {
+    display: flex; /* Usar flexbox para centralizar o contêiner do chatbot */
+    justify-content: center; /* Centraliza horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+    min-height: 100vh; /* Ocupa 100% da altura da viewport */
+    /* Background com a imagem fornecida */
+    background: url('Gemini_Generated_Image_9bifac9bifac9bif.jpg') no-repeat center center fixed; 
+    background-size: cover; /* Faz com que a imagem cubra todo o fundo */
+    font-family: 'Inter', sans-serif; /* Fonte padrão Inter */
+    margin: 0; /* Remove margem padrão */
+    padding: 10px; /* Padding para telas pequenas */
+    box-sizing: border-box; /* Inclui padding e borda no tamanho total */
+    overflow: hidden; /* Evita scroll lateral indesejado na página */
+}
+
+/* Container principal que envolve o conteúdo do chatbot (interage com a sidebar) */
+.sidebar-container {
+    width: 100%; /* Ocupa 100% da largura da tela em desktops */
+    max-width: 100%; /* Garante que não exceda 100% em telas menores */
+    height: 95vh; /* Ocupa 95% da altura da viewport */
+    display: flex; /* Usa flexbox para layout interno */
+    flex-direction: column; /* Organiza os itens em coluna */
+    border-radius: 12px; /* Cantos arredondados */
+    /* Sombra mais sutil para combinar com a transparência */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04); 
+    overflow: hidden; /* Esconde conteúdo que exceda as bordas */
+    /* Fundo transparente para o contêiner principal */
+    background-color: transparent; 
+    border: 1px solid rgba(224,224,224,0.5); /* Borda sutilmente transparente */
+    position: relative; /* Necessário para posicionamento relativo de elementos filhos */
+}
+
+/* Sobrescritas de estilos para a Sidebar do Semantic UI */
+.ui.labeled.icon.sidebar {
+    background-color: #ffffff !important; /* Fundo branco */
+    border-right: 1px solid #f0f0f0; /* Borda direita clara */
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05); /* Sombra para destacar */
+    padding-top: 20px; /* Espaço no topo */
+    width: 200px !important; /* Largura da sidebar */
+}
+.ui.labeled.icon.sidebar .item {
+    justify-content: flex-start !important; /* Alinha o conteúdo dos itens à esquerda */
+    padding: 15px 20px !important; /* Aumenta o padding */
+    font-size: 1.1em !important; /* Tamanho da fonte */
+    color: #5f6368 !important; /* Cor do texto */
+    transition: background-color 0.2s ease, color 0.2s ease; /* Transição suave para hover */
+}
+.ui.labeled.icon.sidebar .item > .icon {
+    margin-right: 15px !important; /* Espaço entre ícone e texto */
+    margin-bottom: 0 !important; /* Remove margem inferior padrão do ícone */
+    font-size: 1.3em !important; /* Tamanho do ícone */
+    color: #707070 !important; /* Cor mais escura para os ícones */
+}
+.ui.labeled.icon.sidebar .item:hover {
+    background-color: #f8f9fa !important; /* Fundo levemente cinza no hover */
+    color: #202124 !important; /* Texto mais escuro no hover */
+}
+.ui.labeled.icon.sidebar .item:hover > .icon {
+    color: #1a73e8 !important; /* Cor azul no hover do ícone */
+}
+
+/* Estilos para o cabeçalho do chat (toolbar) */
+.chat-header {
+    background: linear-gradient(to right, #6a11cb, #2575fc); /* Combinação de roxos/azuis */
+    color: #ffffff; /* Cor do texto para branco para contraste */
+    padding: 15px;
+    font-size: 1.2em;
+    text-align: center;
+    border-bottom: none; 
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    display: flex; /* Para alinhar o botão de menu, título e logotipo */
+    align-items: center; /* Alinha itens verticalmente ao centro */
+    justify-content: space-between; /* Distribui o espaço entre os itens */
+    padding-left: 20px;
+    padding-right: 20px;
+}
+/* Botão de ícone no cabeçalho (para abrir a sidebar) */
+.chat-header .menu-icon-button {
+    background: none; /* Sem fundo */
+    border: none; /* Sem borda */
+    font-size: 1.5em; /* Tamanho do ícone */
+    cursor: pointer; /* Cursor de clique */
+    color: #ffffff; /* Cor do ícone para branco */
+    padding: 0; /* Remove padding */
+    outline: none; /* Remove outline ao focar */
+    flex-shrink: 0; /* Impede que o botão encolha */
+}
+/* Contêiner para o dropdown de seleção do modelo */
+.chat-header .model-dropdown-container {
+    flex-grow: 1; /* Permite que ocupe o espaço restante */
+    display: flex;
+    justify-content: center; /* Centraliza o dropdown horizontalmente */
+    align-items: center;
+    height: 100%; /* Garante que preencha o espaço vertical do header */
+}
+/* Estilos para o dropdown em si */
+.chat-header .ui.pointing.dropdown.item {
+    color: #ffffff !important; /* Texto branco */
+    background-color: transparent !important; /* Fundo transparente */
+    border: none !important; /* Sem borda */
+    font-weight: bold; /* Negrito */
+    font-size: 1.2em !important; /* Tamanho da fonte */
+    cursor: pointer;
+}
+.chat-header .ui.pointing.dropdown.item .icon {
+    color: #ffffff !important; /* Ícone da seta branco */
+}
+.chat-header .ui.pointing.dropdown.item:hover {
+    background-color: rgba(255,255,255,0.1) !important; /* Efeito de hover sutil */
+}
+/* Estilos para o menu do dropdown */
+.ui.pointing.dropdown > .menu {
+    margin-top: 10px; /* Espaço entre o botão e o menu */
+    border-radius: 8px !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+    background-color: #ffffff !important;
+}
+.ui.pointing.dropdown > .menu .item {
+    color: #3c4043 !important; /* Cor do texto dos itens do menu */
+    padding: 10px 15px !important;
+    font-size: 1em !important;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.ui.pointing.dropdown > .menu .item:hover {
+    background-color: #f0f0f0 !important; /* Fundo cinza claro no hover */
+    color: #202124 !important; /* Texto mais escuro no hover */
+}
+
+/* Contêiner para a imagem (logotipo) no lado direito do cabeçalho */
+.chat-header .header-right-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Alinha a imagem à direita */
+    flex-shrink: 0; /* Impede que a área da imagem encolha */
+    width: 60px; /* Largura mínima para a área da imagem (para manter o layout) */
+}
+/* Estilos para a imagem dentro do cabeçalho */
+.chat-header .header-right-content img {
+    height: 40px; /* Altura da imagem */
+    border-radius: 50%; /* Torna a imagem redonda (útil para logos avatares) */
+    object-fit: cover; /* Garante que a imagem preencha o espaço sem distorcer */
+    margin-left: 10px; /* Espaço à esquerda da imagem */
+    border: 2px solid rgba(255,255,255,0.7); /* Adiciona borda branca para logo */
+}
+
+/* Área de mensagens do chat */
+.chat-messages {
+    height: calc(100% - 140px); /* Altura dinâmica (100% menos altura do header e input) */
+    overflow-y: auto; /* Adiciona scroll se o conteúdo exceder a altura */
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0; /* Borda inferior sutil */
+    /* Background tecnológico claro com padrão de teia/pontos */
+    background-color: #f9fcff; /* Fundo base muito claro */
+    background-image: radial-gradient(#d3eaf2 1px, transparent 1px); /* Pontos sutis */
+    background-size: 20px 20px; /* Tamanho do padrão de pontos */
+    flex-grow: 1; /* Permite que ocupe o espaço vertical disponível */
+}
+/* Contêiner individual para cada mensagem (inclui avatar e bolha) */
+.message-container {
+    display: flex; /* Usa flexbox para alinhar avatar e bolha */
+    align-items: flex-start; /* Alinha os itens (avatar e bolha) ao topo */
+    margin-bottom: 10px; /* Espaço entre as mensagens */
+    max-width: 100%; /* Garante que não exceda a largura do contêiner pai */
+    animation: fadeInUp 0.3s ease-out; /* Animação de surgimento suave */
+}
+.message-container.user {
+    justify-content: flex-end; /* Alinha mensagens do usuário à direita */
+}
+.message-container.bot {
+    justify-content: flex-start; /* Alinha mensagens do bot à esquerda */
+}
+/* Estilos para a imagem do avatar */
+.message-avatar {
+    width: 40px; /* Tamanho do avatar */
+    height: 40px;
+    border-radius: 50%; /* Formato redondo */
+    object-fit: cover; /* Ajusta a imagem para cobrir a área */
+    flex-shrink: 0; /* Impede que o avatar encolha */
+    border: 1px solid #e0e0e0; /* Borda sutil */
+}
+.message-container.user .message-avatar {
+    order: 2; /* Move o avatar do usuário para a direita da bolha */
+    margin-left: 10px; /* Espaço entre a bolha e o avatar */
+}
+.message-container.bot .message-avatar {
+    order: 1; /* Mantém o avatar do bot à esquerda da bolha */
+    margin-right: 10px; /* Espaço entre o avatar e a bolha */
+}
+
+/* Estilos para a bolha da mensagem */
+.message {
+    padding: 10px 14px;
+    border-radius: 20px; /* Cantos arredondados (formato bolha) */
+    max-width: 90%; /* Largura máxima da bolha de mensagem */
+    word-wrap: break-word; /* Quebra palavras longas */
+    line-height: 1.5; /* Espaçamento entre linhas */
+    font-size: 0.95em; /* Tamanho da fonte */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Sombra suave para a bolha */
+}
+.message.user {
+    background-color: #e6f4ea; /* Verde muito claro para mensagens do usuário */
+    color: #202124; /* Texto escuro */
+    border-bottom-right-radius: 5px; /* Ajuste sutil no canto inferior direito */
+}
+.message.bot {
+    background-color: #f0f0f0; /* Cinza claro para mensagens do bot */
+    color: #202124; /* Texto escuro */
+    border-bottom-left-radius: 5px; /* Ajuste sutil no canto inferior esquerdo */
+}
+
+/* Estilos para o conteúdo formatado do LLM (CORES CLEAN APLICADAS AQUI) */
+.message.bot h1, .message.bot h2, .message.bot h3, .message.bot h4, .message.bot h5, .message.bot h6 {
+    margin-top: 10px;
+    margin-bottom: 8px;
+    color: #3c4043; /* Mantido: um cinza escuro para títulos */
+    font-weight: bold;
+    line-height: 1.2;
+}
+.message.bot h1 { font-size: 1.6em; }
+.message.bot h2 { font-size: 1.4em; }
+.message.bot h3 { font-size: 1.2em; }
+
+.message.bot strong {
+    font-weight: bold;
+    color: #202124; /* Mantido: cor de texto padrão */
+}
+.message.bot em {
+    font-style: italic;
+    color: #5f6368; /* Mantido: um cinza médio para itálico */
+}
+.message.bot ul {
+    list-style-type: disc;
+    margin-left: 20px;
+    padding-left: 0;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+.message.bot ul li {
+    margin-bottom: 4px;
+}
+.message.bot code {
+    background-color: #f8f8f8; /* ALTERADO: Fundo mais limpo e claro para código inline */
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #333333; /* ALTERADO: Cor de texto mais neutra para código */
+}
+.message.bot pre {
+    background-color: #f8f8f8; /* ALTERADO: Fundo mais limpo e claro para blocos de código */
+    padding: 10px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: monospace;
+    font-size: 0.9em;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    white-space: pre-wrap; /* Garante quebras de linha em blocos de código */
+    word-break: break-all; /* Quebra palavras longas */
+    color: #333333; /* Adicionado: cor de texto para blocos de código */
+}
+.message.bot mark {
+    background-color: #e0f2f7; /* ALTERADO: Azul muito suave e clean para destaque */
+    padding: 1px 3px;
+    border-radius: 3px;
+    color: #202124; /* ALTERADO: Cor do texto padrão sobre o destaque */
+}
+.message.bot blockquote {
+    border-left: 4px solid #a7d9ed; /* ALTERADO: Azul um pouco mais suave para a borda de citação */
+    padding-left: 10px;
+    margin-left: 0;
+    color: #5f6368; /* Mantido: um cinza médio para citações */
+    font-style: italic;
+}
+
+
+/* Área de input para o usuário */
+.chat-input {
+    display: flex; /* Usa flexbox para alinhar textarea e botões */
+    padding: 15px;
+    /* Fundo transparente para a área de input */
+    background-color: transparent; 
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    align-items: flex-end; /* Alinha os itens ao final (inferior) */
+    /* Borda superior sutilmente transparente */
+    border-top: 1px solid rgba(240,240,240,0.5); 
+}
+/* Wrapper div para o textarea (do Semantic UI .fluid .input) */
+.chat-input .ui.fluid.input {
+    flex-grow: 1; /* Permite que ocupe o máximo de espaço disponível */
+    margin-right: 10px; /* Margem à direita antes dos botões de ação */
+}
+/* Estilos para o textarea de input */
+.chat-input textarea {
+    width: 100%; /* Ocupa 100% da largura do contêiner pai (.ui.fluid.input) */
+    border-radius: 24px !important; /* Cantos mais arredondados */
+    padding: 12px 18px !important; /* Padding interno */
+    border: 1px solid #dadce0; /* Borda suave */
+    font-size: 1em; /* Tamanho da fonte */
+    outline: none; /* Remove outline padrão */
+    transition: border-color 0.2s ease, max-height 0.3s ease; /* Transições suaves */
+    resize: none; /* Desabilita o redimensionamento manual pelo usuário */
+    min-height: 48px; /* Altura mínima inicial */
+    max-height: 120px; /* Altura máxima para auto-expansão */
+    line-height: 1.5em; /* Espaçamento entre linhas */
+    overflow-y: auto; /* Adiciona scroll se o conteúdo exceder a max-height */
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03); /* Sombra interna para profundidade */
+}
+.chat-input textarea:focus {
+    border-color: #8ab4f8; /* Cor da borda ao focar */
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 2px rgba(66, 133, 244, 0.2); /* Sombra de foco mais visível */
+}
+/* Contêiner para os botões de ação (anexo, voz, envio) */
+.chat-input .action-buttons {
+    display: flex; /* Usa flexbox para alinhar os botões */
+    gap: 5px; /* Espaçamento entre os botões */
+    align-items: flex-end; /* Alinha os botões com a parte inferior do textarea */
+}
+/* Estilos gerais para todos os botões de ação */
+.chat-input .action-buttons button {
+    border-radius: 50% !important; /* Torna o botão redondo */
+    width: 48px; /* Largura e altura iguais */
+    height: 48px;
+    padding: 0 !important; /* Remove padding interno */
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease; /* Transições suaves */
+    flex-shrink: 0; /* Impede que o botão encolha */
+    display: flex; /* Para centralizar o ícone */
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Sombra suave para os botões */
+}
+/* Estilos para os ícones dentro dos botões */
+.chat-input .action-buttons button .icon {
+    font-size: 1.2em;
+    margin: 0;
+}
+/* Estilos específicos para os botões de anexo e voz (transparentes) */
+.chat-input #attachment-button,
+.chat-input #voice-button {
+    background-color: transparent !important;
+    color: #5f6368 !important; /* Cor do ícone */
+}
+.chat-input #attachment-button:hover,
+.chat-input #voice-button:hover {
+    background-color: #f0f0f0 !important; /* Fundo claro no hover */
+    color: #202124 !important; /* Cor escura no hover */
+}
+/* Estilos para o botão de envio (azul primário) */
+.chat-input #send-button {
+    background-color: #1a73e8 !important; /* Azul Google */
+    color: white !important;
+}
+.chat-input #send-button:hover {
+    background-color: #1669c0 !important; /* Azul mais escuro no hover */
+}
+
+/* --- Estilos para o Modal de Anexo com Grid --- */
+.ui.small.modal > .content {
+    padding: 20px !important;
+}
+.ui.small.modal .grid {
+    margin: 0 !important; /* Remove margem padrão do grid */
+}
+.ui.small.modal .column {
+    padding: 10px !important; /* Padding entre as colunas */
+    display: flex;
+    justify-content: center; /* Centraliza o conteúdo da coluna */
+    align-items: center;
+}
+/* Estilos para os botões dentro do grid do modal (simulando cards) */
+.attachment-card-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 120px; /* Altura fixa para os cards */
+    border-radius: 12px !important; /* Cantos arredondados */
+    padding: 15px !important;
+    font-size: 1em !important;
+    background-color: #f8f9fa !important; /* Fundo claro para o card */
+    color: #5f6368 !important;
+    border: 1px solid #dadce0 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra suave */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    cursor: pointer;
+}
+.attachment-card-button:hover {
+    transform: translateY(-3px); /* Efeito de elevação no hover */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* Sombra mais forte no hover */
+    background-color: #f0f0f0 !important;
+}
+.attachment-card-button .icon {
+    font-size: 2.5em !important; /* Tamanho maior para os ícones dos cards */
+    margin-bottom: 10px !important; /* Espaço entre ícone e texto */
+    color: #707070 !important;
+}
+.attachment-card-button .text {
+    font-weight: bold;
+}
+
+/* --- Media Queries para Responsividade --- */
+
+/* Estilos para telas com largura máxima de 768px (tablets e smartphones) */
+@media (max-width: 768px) {
+    body {
+        padding: 0; /* Remove padding do body em telas pequenas */
+    }
+    .sidebar-container {
+        width: 100%; /* Ocupa toda a largura da tela */
+        height: 100vh; /* Ocupa toda a altura da tela */
+        border-radius: 0; /* Remove cantos arredondados */
+        box-shadow: none; /* Remove sombra */
+        border: none; /* Remove borda */
+    }
+    .chat-header {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+    .chat-messages {
+        height: calc(100% - 140px); /* Altura ajustada para telas pequenas */
+        padding: 10px;
+    }
+    /* Sidebar sempre em modo overlay em dispositivos móveis */
+    .ui.labeled.icon.sidebar {
+        border-right: none;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.2); /* Sombra mais forte */
+    }
+    .chat-input textarea {
+        padding: 10px 15px !important; /* Ajusta padding do textarea */
+        min-height: 40px; /* Reduz altura mínima */
+    }
+    .chat-input .action-buttons button { /* Ajusta tamanho dos botões em telas pequenas */
+        width: 40px;
+        height: 40px;
+    }
+    /* Modal para telas pequenas: ajusta o grid para empilhar */
+    .ui.small.modal .grid {
+        display: flex;
+        flex-direction: column; /* Empilha as colunas */
+    }
+    .ui.small.modal .column {
+        width: 100% !important; /* Ocupa a largura total */
+        padding: 5px !important; /* Reduz o padding entre os cards */
+    }
+    .attachment-card-button {
+        height: 100px; /* Altura um pouco menor em mobile */
+    }
+}

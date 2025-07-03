@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% set active_menu = 'properties' %}
+{% set active_submenu = 'area_and_crop' %}
+
+{% block title %}Área e Cultura - Kognia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_agro.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ui segment">
+    <div class="ui grid">
+        <div class="twelve wide column">
+            <h2 class="ui header">
+                <i class="map icon"></i>
+                <div class="content">
+                    Área e Cultura
+                    <div class="sub header">Relação entre áreas e culturas plantadas</div>
+                </div>
+            </h2>
+        </div>
+        <div class="four wide column right aligned">
+            <button id="refresh-data" class="ui green button">
+                <i class="sync icon"></i>
+                Atualizar Dados
+            </button>
+        </div>
+    </div>
+    
+    <!-- Área para mensagens de status -->
+    <div id="status-messages"></div>
+    
+    <!-- Conteúdo de Área e Cultura -->
+    <div class="ui two column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Produtividade por Área</h3>
+                <div id="productivity-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Rotação de Culturas</h3>
+                <div id="crop-rotation-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ui one column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Mapa de Uso do Solo</h3>
+                <div id="land-use-map" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+{% endblock %}

@@ -1,0 +1,96 @@
+/* Dashboard Agro Styles */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Lato', sans-serif;
+}
+
+/* Estilos para indicadores de carregamento */
+.loading-text {
+    text-align: center;
+    color: #888;
+    margin-top: 10px;
+}
+
+/* Estilos para os containers de gráficos */
+[id$="-chart"] {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.ui.container {
+    margin-top: 2rem;
+}
+
+.ui.statistic {
+    margin: 1rem 0;
+}
+
+.ui.statistic > .value {
+    font-size: 2rem !important;
+}
+
+.ui.segment {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+.ui.header {
+    color: #2c3e50;
+}
+
+.ui.feed .event .label i {
+    color: #f39c12;
+}
+
+.ui.list .item .header {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.ui.tabular.menu .item {
+    font-weight: 500;
+}
+
+.ui.tabular.menu .active.item {
+    background-color: #27ae60 !important;
+    color: white !important;
+}
+
+.crops-status.healthy {
+    color: #27ae60;
+}
+
+.crops-status.warning {
+    color: #f39c12;
+}
+
+.crops-status.danger {
+    color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+    .ui.four.column.grid > .column {
+        width: 50% !important;
+    }
+    
+    .ui.statistic > .value {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* Modern forced-colors support to replace deprecated -ms-high-contrast */
+@media (forced-colors: active) {
+    .ui.button {
+        border: 1px solid;
+    }
+    
+    .ui.segment {
+        border: 1px solid;
+    }
+    
+    .ui.table {
+        border: 1px solid;
+    }
+}

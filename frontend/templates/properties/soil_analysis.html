@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% set active_menu = 'properties' %}
+{% set active_submenu = 'soil_analysis' %}
+
+{% block title %}Análise de Solo - Kognia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_agro.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ui segment">
+    <div class="ui grid">
+        <div class="twelve wide column">
+            <h2 class="ui header">
+                <i class="flask icon"></i>
+                <div class="content">
+                    Análise de Solo
+                    <div class="sub header">Resultados das análises de solo por área</div>
+                </div>
+            </h2>
+        </div>
+        <div class="four wide column right aligned">
+            <button id="refresh-data" class="ui green button">
+                <i class="sync icon"></i>
+                Atualizar Dados
+            </button>
+        </div>
+    </div>
+    
+    <!-- Área para mensagens de status -->
+    <div id="status-messages"></div>
+    
+    <!-- Conteúdo de Análise de Solo -->
+    <div class="ui two column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">pH do Solo por Área</h3>
+                <div id="soil-ph-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Nutrientes do Solo</h3>
+                <div id="soil-nutrients-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ui one column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Histórico de Análises</h3>
+                <div id="soil-history-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+{% endblock %}

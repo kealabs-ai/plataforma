@@ -1,34 +1,136 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui/dist/semantic.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
-    <title>Kognia One - Área de Visitantes</title>
-</head>
-<body>
-    <div class="ui container" style="margin-top: 20px; max-width: 800px;">
-        <div class="ui segment">
-            <div class="ui center aligned">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logotipo da Kognia One" style="max-height: 100px; margin-bottom: 20px;">
+{% extends "base.html" %}
+
+{% set active_menu = 'agent' %}
+
+{% block title %}Agent Agro - Kognia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/visitor.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- Sidebar do Semantic UI para o menu de opções -->
+    <div class="ui labeled icon sidebar inverted vertical menu">
+        <a class="item" href="{{ url_for('index') }}">
+            <i class="home icon"></i>
+            Início
+        </a>
+        <a class="item" href="{{ url_for('dashboard') }}">
+            <i class="leaf icon"></i>
+            Dash Agro
+        </a>
+        <div class="ui divider"></div>
+        <div class="ui header">
+            <i class="comment icon"></i>
+            Chat Setores
+        </div>
+        <a class="item" data-sector="atendente">
+            <i class="user circle icon"></i>
+            Atendente
+        </a>
+        <a class="item" data-sector="comercial">
+            <i class="building outline icon"></i>
+            Comercial
+        </a>
+        <a class="item" data-sector="tecnico">
+            <i class="cogs icon"></i>
+            Técnico
+        </a>
+    </div>
+
+    <!-- Conteúdo principal do chatbot (envolto por .pusher para interação com a sidebar) -->
+    <div class="pusher sidebar-container">
+        <!-- Cabeçalho do Chatbot com botão de menu e logotipo -->
+        <div class="chat-header">
+            <button class="menu-icon-button" id="sidebar-toggle">
+                <i class="bars icon"></i> <!-- Ícone de hambúrguer para abrir a sidebar -->
+            </button>
+             <!-- Dropdown de seleção do modelo de IA -->
+            <div class="model-dropdown-container">
+                <div class="ui pointing dropdown link item" id="model-selector-dropdown">
+                    <span class="text">Chatbot Kognia</span> <!-- Texto inicial do dropdown -->
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <a class="item" data-value="OpenAI">OpenAI</a>
+                        <a class="item" data-value="Gemini-Flash">Gemini-Flash</a>
+                        <a class="item" data-value="Grok">Grok</a>
+                    </div>
+                </div>
             </div>
-            
-            <h1 class="ui header">Área de Visitantes</h1>
-            <p>Bem-vindo à plataforma Kognia One!</p>
-            <p>Aqui você pode explorar algumas funcionalidades disponíveis para visitantes.</p>
-            
-            <h3 class="ui header">Recursos disponíveis</h3>
-            <div class="ui bulleted list">
-                <div class="item">Demonstrações interativas</div>
-                <div class="item">Informações sobre a plataforma</div>
-                <div class="item">Contato para mais informações</div>
+            <div class="header-right-content">
+                <!-- Imagem do logotipo da empresa (substitua a URL pelo seu logo real) -->
+                <img src="https://placehold.co/40x40/4285f4/ffffff?text=LOGO" alt="Logotipo da Kognia">
             </div>
-            
-            <div class="ui divider"></div>
-            
-            <a href="{{ url_for('login') }}" class="ui primary button">
-                <i class="arrow left icon"></i> Voltar ao login
-            </a>
+        </div>
+
+        <div class="content chat-messages" id="chat-messages">
+            <!-- Mensagem inicial do bot -->
+            <div class="message-container bot">
+                <img src="https://placehold.co/40x40/dddddd/000000?text=BOT" alt="Avatar do Bot" class="message-avatar">
+                <div class="ui message bot">Olá! Bem-vindo à Kognia. Por favor, clique no ícone de menu no canto superior esquerdo para selecionar um setor ou acessar o Dashboard Agro.</div>
+            </div>
+        </div>
+
+        <!-- Área de input para o usuário (textarea, botões de anexo/voz/envio) -->
+        <div class="extra content chat-input">
+            <div class="ui fluid input">
+                <textarea id="user-input" placeholder="Digite sua mensagem..." rows="1"></textarea>
+            </div>
+            <div class="action-buttons">
+                <!-- Botão de anexo - AGORA ABRE UM MODAL -->
+                <button class="ui basic icon button" id="attachment-button">
+                    <i class="paperclip icon"></i>
+                </button>
+                <!-- Botão de voz (simulado) -->
+                <button class="ui basic icon button" id="voice-button">
+                    <i class="microphone icon"></i>
+                </button>
+                <!-- Botão de envio -->
+                <button class="ui primary icon button" id="send-button">
+                    <i class="comment alternate icon"></i>
+                </button>
+            </div>
+            <!-- Input de arquivo oculto, acionado pelo botão de anexo local -->
+            <input type="file" id="file-input" style="display: none;">
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Modal para seleção de anexo com grid de cards -->
+    <div class="ui small modal" id="attachment-modal">
+        <i class="close icon"></i>
+        <div class="header">
+            Anexar Arquivo
+        </div>
+        <div class="content">
+            <div class="ui three column grid">
+                <div class="column">
+                    <button class="ui button attachment-card-button" id="attach-local-button">
+                        <i class="computer icon"></i>
+                        <span class="text">Computador</span>
+                    </button>
+                </div>
+                <div class="column">
+                    <button class="ui button attachment-card-button" id="attach-onedrive-button">
+                        <i class="microsoft icon"></i>
+                        <span class="text">OneDrive</span>
+                    </button>
+                </div>
+                <div class="column">
+                    <button class="ui button attachment-card-button" id="attach-google-drive-button">
+                        <i class="google drive icon"></i>
+                        <span class="text">Google Drive</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui cancel button">Cancelar</div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Link para o arquivo JavaScript personalizado (script.js) -->
+<script src="{{ url_for('static', filename='js/visitor.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,11 @@
+/* Estilos para o menu */
+
+/* Garantindo que o dropdown ativo fique visível */
+.ui.dropdown.active.visible .menu.visible {
+    display: block !important;
+}
+
+/* Ajustando z-index para garantir que o menu fique acima de outros elementos */
+.ui.menu .ui.dropdown .menu {
+    z-index: 1000 !important;
+}

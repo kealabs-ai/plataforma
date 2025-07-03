@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% set active_menu = 'dash_agro' %}
+
+{% block title %}Dash Agro - Kognia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_agro.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ui segment">
+            <div class="ui grid">
+                <div class="twelve wide column">
+                    <h2 class="ui header">
+                        <i class="leaf icon"></i>
+                        <div class="content">
+                            Dashboard Agro
+                            <div class="sub header">Monitoramento e análise agrícola</div>
+                        </div>
+                    </h2>
+                </div>
+                <div class="four wide column right aligned">
+                    <button id="refresh-data" class="ui green button">
+                        <i class="sync icon"></i>
+                        Atualizar Dados
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Área para mensagens de status -->
+            <div id="status-messages"></div>
+            
+            <!-- Primeira linha de gráficos -->
+            <div class="ui two column grid">
+                <div class="column">
+                    <div class="ui segment">
+                        <h3 class="ui header">Produção Agrícola por Cultura</h3>
+                        <div id="crop-production-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="ui segment">
+                        <h3 class="ui header">Produção Leiteira Mensal</h3>
+                        <div id="milk-production-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Segunda linha de gráficos -->
+            <div class="ui two column grid">
+                <div class="column">
+                    <div class="ui segment">
+                        <h3 class="ui header">Distribuição de Insumos</h3>
+                        <div id="inputs-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="ui segment">
+                        <h3 class="ui header">pH do Solo por Talhão</h3>
+                        <div id="soil-ph-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Terceira linha - Gráfico financeiro -->
+            <div class="ui one column grid">
+                <div class="column">
+                    <div class="ui segment">
+                        <h3 class="ui header">Receita vs Despesa</h3>
+                        <div id="financial-chart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    // Verifica se a biblioteca ECharts foi carregada corretamente
+    window.addEventListener('load', function() {
+        if (typeof echarts === 'undefined') {
+            console.error('A biblioteca ECharts não foi carregada corretamente!');
+            document.getElementById('status-messages').innerHTML = 
+                '<div class="ui negative message"><div class="header">Erro!</div><p>A biblioteca de gráficos não foi carregada. Tente recarregar a página.</p></div>';
+        } else {
+            console.log('ECharts carregado com sucesso!');
+        }
+    });
+</script>
+<script src="{{ url_for('static', filename='js/dash_agro.js') }}"></script>
+{% endblock %}

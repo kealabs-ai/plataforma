@@ -10,3 +10,7 @@ def login():
         # Aqui você pode adicionar a lógica de autenticação
         return redirect(url_for('dashboard'))  # Ajuste conforme sua rota de dashboard
     return render_template('login.html')
+
+@bp.route('/dash_visitor')
+def dash_visitor():
+    return render_template('dash_visitor.html')

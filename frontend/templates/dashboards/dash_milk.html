@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% set active_menu = 'dashboards' %}
+{% set active_submenu = 'dash_milk' %}
+
+{% block title %}BI Produção de Leite - Kognia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_agro.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ui segment">
+    <div class="ui grid">
+        <div class="twelve wide column">
+            <h2 class="ui header">
+                <i class="tint icon"></i>
+                <div class="content">
+                    BI Produção de Leite
+                    <div class="sub header">Análise detalhada da produção leiteira</div>
+                </div>
+            </h2>
+        </div>
+        <div class="four wide column right aligned">
+            <button id="refresh-data" class="ui green button">
+                <i class="sync icon"></i>
+                Atualizar Dados
+            </button>
+        </div>
+    </div>
+    
+    <!-- Área para mensagens de status -->
+    <div id="status-messages"></div>
+    
+    <!-- Conteúdo do BI Produção de Leite -->
+    <div class="ui two column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Produção Diária</h3>
+                <div id="daily-production-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Produção por Animal</h3>
+                <div id="animal-production-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ui one column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Tendência de Produção Anual</h3>
+                <div id="annual-trend-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+{% endblock %}

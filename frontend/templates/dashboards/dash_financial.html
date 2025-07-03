@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% set active_menu = 'dashboards' %}
+{% set active_submenu = 'dash_financial' %}
+
+{% block title %}BI Financeiro - Kognia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_agro.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ui segment">
+    <div class="ui grid">
+        <div class="twelve wide column">
+            <h2 class="ui header">
+                <i class="money bill alternate icon"></i>
+                <div class="content">
+                    BI Financeiro
+                    <div class="sub header">Análise financeira da propriedade</div>
+                </div>
+            </h2>
+        </div>
+        <div class="four wide column right aligned">
+            <button id="refresh-data" class="ui green button">
+                <i class="sync icon"></i>
+                Atualizar Dados
+            </button>
+        </div>
+    </div>
+    
+    <!-- Área para mensagens de status -->
+    <div id="status-messages"></div>
+    
+    <!-- Conteúdo do BI Financeiro -->
+    <div class="ui two column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Receitas vs Despesas</h3>
+                <div id="revenue-expense-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Lucratividade por Cultura</h3>
+                <div id="crop-profit-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ui one column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Fluxo de Caixa Anual</h3>
+                <div id="annual-cashflow-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+{% endblock %}

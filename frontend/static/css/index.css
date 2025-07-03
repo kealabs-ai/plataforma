@@ -1,0 +1,51 @@
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.ui.container {
+    margin-top: 3rem;
+}
+
+.ui.segment {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.ui.card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.ui.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.ui.header {
+    color: #2c3e50;
+}
+
+.ui.header .icon {
+    color: #27ae60;
+}
+
+.card .header {
+    color: #2c3e50;
+    font-size: 1.2em;
+}
+
+.card .description {
+    color: #7f8c8d;
+    margin-top: 0.5rem;
+}
+
+.ui.button {
+    border-radius: 8px;
+    font-weight: 500;
+}

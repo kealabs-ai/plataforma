@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% set active_menu = 'operations' %}
+{% set active_submenu = 'milk_production' %}
+
+{% block title %}Produção de Leite (dia) - Kognia{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dash_agro.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ui segment">
+    <div class="ui grid">
+        <div class="twelve wide column">
+            <h2 class="ui header">
+                <i class="tint icon"></i>
+                <div class="content">
+                    Produção de Leite (dia)
+                    <div class="sub header">Monitoramento diário da produção leiteira</div>
+                </div>
+            </h2>
+        </div>
+        <div class="four wide column right aligned">
+            <button id="refresh-data" class="ui green button">
+                <i class="sync icon"></i>
+                Atualizar Dados
+            </button>
+        </div>
+    </div>
+    
+    <!-- Área para mensagens de status -->
+    <div id="status-messages"></div>
+    
+    <!-- Cards de Estatísticas -->
+    <div class="ui centered four column grid">
+        <div class="column">
+            <div class="ui centered card">
+                <div class="content center aligned">
+                    <div class="ui statistic">
+                        <div class="value" id="total-liters">0</div>
+                        <div class="label">Litros de Leite</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui centered card">
+                <div class="content center aligned">
+                    <div class="ui statistic">
+                        <div class="value" id="total-animals">0</div>
+                        <div class="label">Animais</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui centered card">
+                <div class="content center aligned">
+                    <div class="ui statistic">
+                        <div class="value" id="total-value">R$ 0,00</div>
+                        <div class="label">Valor Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui centered card yellow">
+                <div class="content center aligned">
+                    <div class="ui statistic">
+                        <div class="value" id="milk-price">R$ 2,50</div>
+                        <div class="label">Valor por Litro</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtros de Data -->
+    <div class="ui segment">
+        <div class="ui form">
+            <div class="inline fields">
+                <label>Filtrar por período:</label>
+                <div class="field">
+                    <label>Data Início</label>
+                    <input type="date" id="start-date" name="start_date">
+                </div>
+                <div class="field">
+                    <label>Data Fim</label>
+                    <input type="date" id="end-date" name="end_date">
+                </div>
+                <div class="field">
+                    <label>Animal</label>
+                    <select class="ui dropdown" id="filter-animal" name="animal_filter">
+                        <option value="">Todos os animais</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <button class="ui primary button" id="apply-filters">Aplicar Filtros</button>
+                    <button class="ui button" id="clear-filters">Limpar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Conteúdo de Produção de Leite (dia) -->
+    <div class="ui two column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Produção Diária (últimos 30 dias)</h3>
+                <div id="daily-production-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Produção por Animal</h3>
+                <div id="animal-production-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ui one column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Registro de Produção</h3>
+                <form class="ui form">
+                    <div class="fields">
+                        <div class="field">
+                            <label>Data</label>
+                            <input type="date" name="date">
+                        </div>
+                        <div class="field">
+                            <label>Animal</label>
+                            <div class="ui action input">
+                                <select class="ui dropdown" name="animal">
+                                    <option value="">Selecione o animal</option>
+                                </select>
+                                <button class="ui icon button" type="button" id="add-animal-button">
+                                    <i class="plus icon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Quantidade (L)</label>
+                            <input type="number" name="quantity" step="0.1">
+                        </div>
+                        <div class="field">
+                            <label>Período</label>
+                            <select class="ui dropdown" name="period">
+                                <option value="">Selecione o período</option>
+                                <option value="morning">Manhã</option>
+                                <option value="afternoon">Tarde</option>
+                                <option value="night">Noite</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="ui primary button" type="submit">Registrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabela de Registros de Produção de Leite -->
+    <div class="ui one column grid">
+        <div class="column">
+            <div class="ui segment">
+                <h3 class="ui header">Registros de Produção de Leite</h3>
+                
+                <table class="ui celled padded table">
+                  <thead>
+                    <tr>
+                      <th>Data de Produção</th>
+                      <th>Animal</th>
+                      <th>Litros Produzidos</th>
+                      <th>Período</th>
+                      <th>Observações</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- As linhas serão inseridas aqui pelo JS -->
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th colspan="6">
+                        <div class="ui right floated pagination menu">
+                          <!-- Paginação será inserida aqui pelo JS -->
+                        </div>
+                      </th>
+                    </tr>
+                  </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Cadastro de Animal -->
+<div class="ui modal" id="animal-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        <i class="paw icon"></i> Cadastrar Novo Animal
+    </div>
+    <div class="content">
+        <form class="ui form" id="animal-form">
+            <div class="two fields">
+                <div class="required field">
+                    <label>ID Oficial (Brinco)</label>
+                    <input type="text" name="official_id" placeholder="Número do brinco" required>
+                </div>
+                <div class="field">
+                    <label>Nome</label>
+                    <input type="text" name="name" placeholder="Nome do animal">
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="required field">
+                    <label>Data de Nascimento</label>
+                    <input type="date" name="birth_date" required>
+                </div>
+                <div class="field">
+                    <label>Raça</label>
+                    <input type="text" name="breed" placeholder="Raça do animal">
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="required field">
+                    <label>Sexo</label>
+                    <select class="ui dropdown" name="gender" required>
+                        <option value="">Selecione</option>
+                        <option value="F">Fêmea</option>
+                        <option value="M">Macho</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Status</label>
+                    <select class="ui dropdown" name="status">
+                        <option value="">Selecione</option>
+                        <option value="Em Lactação">Em Lactação</option>
+                        <option value="Seca">Seca</option>
+                        <option value="Bezerra">Bezerra</option>
+                        <option value="Novilha">Novilha</option>
+                        <option value="Touro">Touro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label>Data de Entrada no Rebanho</label>
+                <input type="date" name="entry_date">
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-animal-button">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Edição de Registro de Produção -->
+<div class="ui modal" id="edit-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        <i class="edit icon"></i> Editar Registro de Produção
+    </div>
+    <div class="content">
+        <form class="ui form" id="edit-form">
+            <input type="hidden" name="edit_id">
+            <div class="two fields">
+                <div class="disabled field">
+                    <label>Animal</label>
+                    <select class="ui dropdown" name="edit_animal" disabled>
+                        <option value="">Selecione o animal</option>
+                    </select>
+                </div>
+                <div class="disabled field">
+                    <label>Data</label>
+                    <input type="date" name="edit_date" disabled>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="required field">
+                    <label>Quantidade (L)</label>
+                    <input type="number" name="edit_quantity" step="0.1" required>
+                </div>
+                <div class="required field">
+                    <label>Período</label>
+                    <select class="ui dropdown" name="edit_period" required>
+                        <option value="">Selecione o período</option>
+                        <option value="morning">Manhã</option>
+                        <option value="afternoon">Tarde</option>
+                        <option value="night">Noite</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="edit_notes" rows="2"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-edit-button">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="{{ url_for('static', filename='js/milk_production.js') }}"></script>
+{% endblock %}

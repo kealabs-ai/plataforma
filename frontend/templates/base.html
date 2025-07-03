@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kognia Agro{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+    {% block extra_css %}{% endblock %}
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .main-content {
+            padding: 15px;
+        }
+    </style>
+</head>
+<body data-active-menu="{{ active_menu }}">
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="ui menu">
+            <div class="header item">Kognia Agro</div>
+            <a class="item {% if active_menu == 'home' %}active{% endif %}" href="{{ url_for('home') }}">
+                <i class="home icon"></i> Home
+            </a>
+            <a class="item {% if active_menu == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a class="item {% if active_menu == 'agent' %}active{% endif %}" href="{{ url_for('visitor') }}">
+                <i class="robot icon"></i> Agent Agro
+            </a>
+            
+            <!-- Indicadores Dropdown -->
+            <div class="ui dropdown item dashboards {% if active_menu == 'dashboards' %}active{% endif %}">
+                Indicadores <i class="dropdown icon"></i>
+                <div class="menu">
+                    <a class="item {% if active_submenu == 'dash_general' %}active{% endif %}" href="{{ url_for('dashboards.dash_general') }}">
+                        <i class="chart bar icon"></i> BI Geral
+                    </a>
+                    <a class="item {% if active_submenu == 'dash_milk' %}active{% endif %}" href="{{ url_for('dashboards.dash_milk') }}">
+                        <i class="tint icon"></i> BI Produção de Leite
+                    </a>
+                    <a class="item {% if active_submenu == 'dash_financial' %}active{% endif %}" href="{{ url_for('dashboards.dash_financial') }}">
+                        <i class="money bill alternate icon"></i> BI Financeiro
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Propriedades Dropdown -->
+            <div class="ui dropdown item properties {% if active_menu == 'properties' %}active{% endif %}">
+                Propriedades <i class="dropdown icon"></i>
+                <div class="menu">
+                    <a class="item {% if active_submenu == 'crop_overview' %}active{% endif %}" href="{{ url_for('properties.crop_overview') }}">
+                        <i class="seedling icon"></i> Áreas Cultivadas
+                    </a>
+                    <a class="item {% if active_submenu == 'soil_analysis' %}active{% endif %}" href="{{ url_for('properties.soil_analysis') }}">
+                        <i class="flask icon"></i> Análise de solo
+                    </a>
+                    <a class="item {% if active_submenu == 'area_and_crop' %}active{% endif %}" href="{{ url_for('properties.area_and_crop') }}">
+                        <i class="map icon"></i> Área e Cultura
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Atividades/Insumos Dropdown -->
+            <div class="ui dropdown item activities_inputs {% if active_menu == 'activities_inputs' %}active{% endif %}">
+                Atividades/Insumos <i class="dropdown icon"></i>
+                <div class="menu">
+                    <a class="item {% if active_submenu == 'agricultural_inputs' %}active{% endif %}" href="{{ url_for('activities_inputs.agricultural_inputs') }}">
+                        <i class="box icon"></i> Insumos Agrícolas
+                    </a>
+                    <a class="item {% if active_submenu == 'field_operations' %}active{% endif %}" href="{{ url_for('activities_inputs.field_operations') }}">
+                        <i class="tasks icon"></i> Atividades Operacionais
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Fluxo de Caixa Dropdown -->
+            <div class="ui dropdown item finance {% if active_menu == 'finance' %}active{% endif %}">
+                Fluxo de Caixa <i class="dropdown icon"></i>
+                <div class="menu">
+                    <a class="item {% if active_submenu == 'expenses_vs_revenues' %}active{% endif %}" href="{{ url_for('finance.expenses_vs_revenues') }}">
+                        <i class="exchange icon"></i> Despesas vs Receitas
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Produção Agro Dropdown -->
+            <div class="ui dropdown item operations {% if active_menu == 'operations' %}active{% endif %}">
+                Produção Agro <i class="dropdown icon"></i>
+                <div class="menu">
+                    <a class="item {% if active_submenu == 'milk_production' %}active{% endif %}" href="{{ url_for('operations.milk_production') }}">
+                        <i class="tint icon"></i> Produção de Leite (dia)
+                    </a>
+                </div>
+            </div>
+            
+            <div class="right menu">
+                {% if user %}
+                <div class="item">
+                    <i class="user icon"></i> {{ user.username }}
+                </div>
+                {% endif %}
+                <a class="item" href="{{ url_for('logout') }}">
+                    <i class="sign out icon"></i> Sair
+                </a>
+            </div>
+        </div>
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+    <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% set active_menu = 'home' %}
+
+{% block title %}Kognia Agro - Home{% endblock %}
+
+{% block content %}
+<style>
+    .home-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 100px);
+        padding: 20px;
+    }
+    
+    .home-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .cards-container {
+        max-width: 1200px;
+        width: 100%;
+    }
+</style>
+
+<div class="home-container">
+    <div class="home-header">
+        <h1 class="ui header">
+            <i class="leaf icon"></i>
+            <div class="content">
+                Bem-vindo ao Kognia Agro
+                <div class="sub header">Plataforma integrada para gestão agrícola</div>
+            </div>
+        </h1>
+    </div>
+
+    <!-- Cards principais -->
+    <div class="ui three cards cards-container">
+        <!-- Card do Agent Agro -->
+        <a class="ui raised card" href="{{ url_for('visitor') }}">
+            <div class="content">
+                <div class="header">
+                    <i class="robot icon"></i> Agent Agro
+                </div>
+                <div class="meta">Assistente Inteligente</div>
+                <div class="description">
+                    <p>Utilize nosso assistente inteligente para obter insights, recomendações e ajuda com suas operações agrícolas.</p>
+                </div>
+            </div>
+            <div class="extra content">
+                <span class="right floated">
+                    <i class="arrow right icon"></i> Acessar
+                </span>
+                <span>
+                    <i class="lightbulb icon"></i> IA Avançada
+                </span>
+            </div>
+        </a>
+
+        <!-- Card do Dashboard -->
+        <a class="ui raised card" href="{{ url_for('dashboard') }}">
+            <div class="content">
+                <div class="header">
+                    <i class="chart line icon"></i> Dashboard
+                </div>
+                <div class="meta">Visualização de Dados</div>
+                <div class="description">
+                    <p>Acesse gráficos, indicadores e métricas importantes para monitorar o desempenho de sua propriedade.</p>
+                </div>
+            </div>
+            <div class="extra content">
+                <span class="right floated">
+                    <i class="arrow right icon"></i> Acessar
+                </span>
+                <span>
+                    <i class="chart bar icon"></i> Análises
+                </span>
+            </div>
+        </a>
+
+        <!-- Card do Tour do Sistema -->
+        <div class="ui raised card">
+            <div class="content">
+                <div class="header">
+                    <i class="info circle icon"></i> Tour do Sistema
+                </div>
+                <div class="meta">Conheça a plataforma</div>
+                <div class="description">
+                    <div class="ui three top attached steps">
+                        <div class="step">
+                            <i class="robot icon"></i>
+                            <div class="content">
+                                <div class="title">Agent</div>
+                                <div class="description">Consulte o assistente</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <i class="chart line icon"></i>
+                            <div class="content">
+                                <div class="title">Dashboard</div>
+                                <div class="description">Analise dados</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <i class="cog icon"></i>
+                            <div class="content">
+                                <div class="title">Gestão</div>
+                                <div class="description">Gerencie operações</div>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px;">Explore todas as funcionalidades da plataforma Kognia Agro para otimizar sua produção agrícola.</p>
+                </div>
+            </div>
+            <div class="extra content">
+                <span>
+                    <i class="question circle icon"></i> Precisa de ajuda? Consulte nosso Agent Agro
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

@@ -4,6 +4,13 @@ import requests
 import logging
 from dotenv import load_dotenv
 
+# Importando os blueprints
+from dashboards import bp as dashboards_bp
+from properties import bp as properties_bp
+from activities_inputs import bp as activities_inputs_bp
+from finance import bp as finance_bp
+from operations import bp as operations_bp
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -18,9 +25,20 @@ app = Flask(__name__)
 app.secret_key = "kognia_one_secret_key"
 app.logger.setLevel(logging.DEBUG)
 
+# Registrando os blueprints
+app.register_blueprint(dashboards_bp, url_prefix='/dashboards')
+app.register_blueprint(properties_bp, url_prefix='/properties')
+app.register_blueprint(activities_inputs_bp, url_prefix='/activities_inputs')
+app.register_blueprint(finance_bp, url_prefix='/finance')
+app.register_blueprint(operations_bp, url_prefix='/operations')
+
 @app.route('/')
 def index():
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))
+
+@app.route('/home')
+def home():
+    return render_template('home.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -66,29 +84,11 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
-    if 'token' not in session:
-        return redirect(url_for('login'))
-    
-    # Get user info using the token
-    try:
-        response = requests.get(
-            f"{API_URL}/users/me",
-            headers={
-                "Authorization": f"{session.get('token_type', 'Bearer')} {session.get('token')}"
-            }
-        )
-        
-        if response.status_code == 200:
-            user_data = response.json()
-            return render_template('dashboard.html', user=user_data)
-        else:
-            # Token might be invalid or expired
-            session.pop('token', None)
-            session.pop('token_type', None)
-            return redirect(url_for('login'))
-    except Exception as e:
-        app.logger.error(f"API Error: {str(e)}")
-        return render_template('dashboard.html', error=str(e))
+    return render_template('dash_agro.html')
+
+@app.route('/dash_agro')
+def dash_agro():
+    return render_template('dash_agro.html')
 
 @app.route('/forgot-password')
 def forgot_password():

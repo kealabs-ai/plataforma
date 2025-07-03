@@ -1,0 +1,50 @@
+/* Estilos para o menu lateral (sidebar) */
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.main-content {
+    margin-left: 250px;
+    padding: 15px;
+    transition: margin-left 0.5s;
+}
+
+.sidebar {
+    width: 250px;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    z-index: 999;
+    transition: width 0.5s;
+    background-color: #1b1c1d;
+}
+
+.sidebar-hidden {
+    width: 0;
+    overflow: hidden;
+}
+
+.main-content-full {
+    margin-left: 0;
+}
+
+.toggle-sidebar {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 0;
+        overflow: hidden;
+    }
+    .main-content {
+        margin-left: 0;
+    }
+}
