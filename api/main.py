@@ -43,6 +43,7 @@ from agro import router as agro_router
 from milk_production import router as milk_router
 from animals_production import router as animals_production_router
 from milk_total import router as milk_total_router
+from milk_daily_by_animal import router as milk_daily_by_animal_router
 
 # Importa a instância do banco de dados (certifique-se de que milk_db está acessível)
 from backend.milk_database import milk_db # Importa a instância global
@@ -84,6 +85,7 @@ app.include_router(agro_router)
 app.include_router(milk_router)
 app.include_router(animals_production_router)
 app.include_router(milk_total_router)
+app.include_router(milk_daily_by_animal_router)
 
 # --- Modelos Pydantic para as Novas Respostas ---
 class MonthlyMilkProductionResponse(BaseModel):

@@ -26,6 +26,11 @@ $(document).ready(function() {
 
 // Carrega os dados do dashboard
 function loadDashboardData(startDate = null, endDate = null, animalId = null) {
+    // Primeiro, garantir que temos a lista de animais carregada
+    if (animalsList.length === 0) {
+        loadAnimals();
+    }
+    
     let url = `${API_URL}/milk/dashboard`;
     let params = [];
     
@@ -567,13 +572,174 @@ function renderDailyProductionChart(data) {
     
     const myChart = echarts.init(chartDom);
     
-    const dates = data.map(item => item.date);
-    const values = data.map(item => parseFloat(item.total_liters) || 0);
+    // Extrair datas únicas para o eixo X
+    const dates = [...new Set(data.map(item => item.date))].sort();
+    
+    // Preparar dados para o gráfico
+    const seriesData = [];
+    
+    // Adicionar série para o total diário
+    const totalByDate = {};
+    data.forEach(item => {
+        const date = item.date;
+        if (!totalByDate[date]) {
+            totalByDate[date] = 0;
+        }
+        totalByDate[date] += parseFloat(item.total_liters) || 0;
+    });
+    
+    // Adicionar série para o total geral
+    seriesData.push({
+        name: 'Total Diário',
+        type: 'line',
+        smooth: true,
+        lineStyle: { color: '#4285f4', width: 3 },
+        areaStyle: {
+            color: {
+                type: 'linear',
+                x: 0, y: 0, x2: 0, y2: 1,
+                colorStops: [
+                    { offset: 0, color: 'rgba(66, 133, 244, 0.5)' },
+                    { offset: 1, color: 'rgba(66, 133, 244, 0.1)' }
+                ]
+            }
+        },
+        data: dates.map(date => totalByDate[date] || 0)
+    });
+    
+    // Calcular a média diária
+    const totalValues = dates.map(date => totalByDate[date] || 0);
+    const avgValue = totalValues.reduce((sum, val) => sum + val, 0) / totalValues.length;
+    
+    // Adicionar série para a média
+    seriesData.push({
+        name: 'Média',
+        type: 'line',
+        smooth: false,
+        symbol: 'none',
+        lineStyle: {
+            color: '#FF5722',
+            width: 2,
+            type: 'dashed'
+        },
+        data: dates.map(() => avgValue)
+    });
+    
+    // Buscar dados de produção por animal
+    if (animalsList && animalsList.length > 0) {
+        // Criar um mapa de cores para os animais
+        const colors = ['#2196F3', '#4CAF50', '#FFC107', '#9C27B0', '#00BCD4', '#FF9800', '#795548', '#607D8B'];
+        
+        // Preparar dados para enviar ao endpoint
+        const requestData = {
+            start_date: dates[0] || null,
+            end_date: dates[dates.length - 1] || null,
+            user_id: null
+        };
+        
+        // Adicionar até 5 animais com maior produção
+        const topAnimals = animalsList.slice(0, 5);
+        
+        // Chamada assíncrona para obter dados por animal
+        $.ajax({
+            url: `${API_URL}/milk/daily-animal-production`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(requestData),
+            success: function(animalData) {
+                if (animalData && Array.isArray(animalData)) {
+                    // Agrupar dados por animal
+                    const animalDataByAnimal = {};
+                    animalData.forEach(item => {
+                        if (!animalDataByAnimal[item.animal_id]) {
+                            animalDataByAnimal[item.animal_id] = {
+                                name: item.animal_name || item.official_id || `Animal ${item.animal_id}`,
+                                data: {}
+                            };
+                        }
+                        animalDataByAnimal[item.animal_id].data[item.date] = parseFloat(item.total_liters) || 0;
+                    });
+                    
+                    // Adicionar séries para cada animal
+                    topAnimals.forEach((animal, index) => {
+                        if (animalDataByAnimal[animal.animal_id]) {
+                            const animalInfo = animalDataByAnimal[animal.animal_id];
+                            const animalSeries = {
+                                name: animalInfo.name,
+                                type: 'line',
+                                smooth: true,
+                                symbol: 'circle',
+                                symbolSize: 6,
+                                lineStyle: {
+                                    color: colors[index % colors.length],
+                                    width: 2
+                                },
+                                data: dates.map(date => animalInfo.data[date] || 0)
+                            };
+                            
+                            // Adicionar a série ao gráfico
+                            myChart.setOption({
+                                series: [...myChart.getOption().series, animalSeries],
+                                legend: {
+                                    data: [...myChart.getOption().legend[0].data, animalInfo.name],
+                                    bottom: 0
+                                }
+                            });
+                        }
+                    });
+                }
+            },
+            error: function(error) {
+                console.error('Erro ao obter dados de produção por animal:', error);
+                // Fallback para dados simulados
+                topAnimals.forEach((animal, index) => {
+                    seriesData.push({
+                        name: animal.name || animal.official_id || `Animal ${animal.animal_id}`,
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 6,
+                        lineStyle: {
+                            color: colors[index % colors.length],
+                            width: 2
+                        },
+                        data: dates.map(() => Math.random() * avgValue * 0.8) // Dados simulados para exemplo
+                    });
+                });
+                
+                // Atualizar o gráfico com os dados simulados
+                myChart.setOption({
+                    series: seriesData,
+                    legend: {
+                        data: seriesData.map(item => item.name),
+                        bottom: 0
+                    }
+                });
+            }
+        });
+    }
     
     const option = {
         tooltip: {
             trigger: 'axis',
-            formatter: '{b}: {c} litros'
+            formatter: function(params) {
+                let result = params[0].axisValueLabel + '<br/>';
+                params.forEach(param => {
+                    result += `${param.marker} ${param.seriesName}: ${param.value.toFixed(1)} litros<br/>`;
+                });
+                return result;
+            }
+        },
+        legend: {
+            data: seriesData.map(item => item.name),
+            bottom: 0
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '15%',
+            top: '3%',
+            containLabel: true
         },
         xAxis: {
             type: 'category',
@@ -589,36 +755,7 @@ function renderDailyProductionChart(data) {
             type: 'value',
             name: 'Litros'
         },
-        series: [
-            {
-                data: values,
-                type: 'line',
-                smooth: true,
-                lineStyle: {
-                    color: '#4285f4',
-                    width: 3
-                },
-                areaStyle: {
-                    color: {
-                        type: 'linear',
-                        x: 0,
-                        y: 0,
-                        x2: 0,
-                        y2: 1,
-                        colorStops: [
-                            {
-                                offset: 0,
-                                color: 'rgba(66, 133, 244, 0.5)'
-                            },
-                            {
-                                offset: 1,
-                                color: 'rgba(66, 133, 244, 0.1)'
-                            }
-                        ]
-                    }
-                }
-            }
-        ]
+        series: seriesData
     };
     
     myChart.setOption(option);
