@@ -74,4 +74,18 @@ function renderPagination(response, containerId, loadFunction, filters = {}) {
     pagination.append(nextButton);
     
     container.append(pagination);
+    
+    // Adicionar informações sobre os itens exibidos
+    if (response.total_items) {
+        const startItem = (response.page - 1) * response.page_size + 1;
+        const endItem = Math.min(startItem + response.page_size - 1, response.total_items);
+        
+        const infoText = $(`
+            <div class="ui small text" style="margin-top: 10px; text-align: center;">
+                Mostrando ${startItem} a ${endItem} de ${response.total_items} registros
+            </div>
+        `);
+        
+        container.append(infoText);
+    }
 }

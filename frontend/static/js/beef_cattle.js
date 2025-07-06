@@ -387,14 +387,16 @@ function renderWeightRecords(data) {
     let prevWeight = null;
     
     data.forEach((record, index) => {
-        const diff = prevWeight !== null ? record.weight - prevWeight : 0;
+        // Garantir que weight seja um número
+        const weight = parseFloat(record.weight) || 0;
+        const diff = prevWeight !== null ? weight - prevWeight : 0;
         const diffClass = diff >= 0 ? 'weight-gain-positive' : 'weight-gain-negative';
         const diffText = index > 0 ? `${diff > 0 ? '+' : ''}${diff.toFixed(1)}` : '-';
         
         tableBody.append(`
             <tr>
                 <td>${formatDate(record.weight_date)}</td>
-                <td>${record.weight.toFixed(1)}</td>
+                <td>${weight.toFixed(2)}</td>
                 <td class="${diffClass}">${diffText}</td>
                 <td>${record.notes || '-'}</td>
                 <td>
@@ -408,7 +410,7 @@ function renderWeightRecords(data) {
             </tr>
         `);
         
-        prevWeight = record.weight;
+        prevWeight = weight;
     });
     
     if (data.length === 0) {
@@ -472,11 +474,14 @@ function renderFeedingRecords(data) {
     tableBody.empty();
     
     data.forEach(record => {
+        // Garantir que quantity seja um número
+        const quantity = parseFloat(record.quantity) || 0;
+        
         tableBody.append(`
             <tr>
                 <td>${formatDate(record.feeding_date)}</td>
                 <td>${record.feed_type}</td>
-                <td>${record.quantity.toFixed(2)}</td>
+                <td>${quantity.toFixed(2)}</td>
                 <td>${record.unit}</td>
                 <td>${record.notes || '-'}</td>
                 <td>
@@ -701,14 +706,18 @@ function renderSalesData(data) {
             peso = Number(record.final_weight).toFixed(2);
         }
         
+        // Garantir que price_per_kg e total_value sejam números
+        const pricePerKg = parseFloat(record.price_per_kg) || 0;
+        const totalValue = parseFloat(record.total_value) || 0;
+        
         tableBody.append(`
             <tr>
                 <td>${formatDate(record.sale_date)}</td>
                 <td>${record.official_id}</td>
                 <td>${record.name || '-'}</td>
                 <td>${peso}</td>
-                <td>R$ ${record.price_per_kg.toFixed(2)}</td>
-                <td>R$ ${record.total_value.toFixed(2)}</td>
+                <td>R$ ${pricePerKg.toFixed(2)}</td>
+                <td>R$ ${totalValue.toFixed(2)}</td>
                 <td>${record.buyer || '-'}</td>
                 <td>
                     <button class="ui mini icon button" onclick="viewSaleRecord(${record.id})">
@@ -724,13 +733,32 @@ function renderSalesData(data) {
     }
 }
 
-function loadAnalyticsData() {
+function loadAnalyticsData(page = 1, pageSize = 10) {
     $.ajax({
-        url: API_URL + '/api/beef_cattle/dashboard/weight-gain',
+        url: API_URL + `/api/beef_cattle/dashboard/weight-gain?page=${page}&page_size=${pageSize}`,
         method: 'GET',
         timeout: 10000, // Aumentar o timeout para 10 segundos
-        success: function(data) {
-            renderAnalyticsData(data);
+        success: function(response) {
+            // Verificar se a resposta tem a estrutura esperada
+            if (response && response.items) {
+                renderAnalyticsData(response.items);
+                renderPagination(response, 'performance-pagination', loadAnalyticsData, {});
+            } else {
+                // Se a resposta não tem a estrutura esperada, tratar como array direto
+                console.warn('Resposta não tem a estrutura esperada:', response);
+                
+                // Criar resposta paginada mockada
+                const mockResponse = {
+                    items: Array.isArray(response) ? response : [],
+                    page: page,
+                    page_size: pageSize,
+                    total_items: Array.isArray(response) ? response.length : 0,
+                    total_pages: Math.ceil((Array.isArray(response) ? response.length : 0) / pageSize)
+                };
+                
+                renderAnalyticsData(mockResponse.items);
+                renderPagination(mockResponse, 'performance-pagination', loadAnalyticsData, {});
+            }
         },
         error: function(error) {
             console.error('Erro ao carregar dados de análise:', error);
@@ -761,7 +789,18 @@ function loadAnalyticsData() {
                     "daily_gain": 0.67
                 }
             ];
-            renderAnalyticsData(mockData);
+            
+            // Criar resposta paginada mockada
+            const mockResponse = {
+                items: mockData,
+                page: page,
+                page_size: pageSize,
+                total_items: mockData.length,
+                total_pages: Math.ceil(mockData.length / pageSize)
+            };
+            
+            renderAnalyticsData(mockResponse.items);
+            renderPagination(mockResponse, 'performance-pagination', loadAnalyticsData, {});
         }
     });
 }
@@ -804,6 +843,11 @@ function renderAnalyticsData(data) {
         ];
     }
     
+    if (data.length === 0) {
+        tableBody.append('<tr><td colspan="7" class="center aligned">Nenhum dado disponível</td></tr>');
+        return;
+    }
+    
     data.forEach(record => {
         // Garantir que os valores numéricos sejam números
         const initialWeight = parseFloat(record.initial_weight) || 0;
@@ -824,10 +868,6 @@ function renderAnalyticsData(data) {
         `);
     });
     
-    if (data.length === 0) {
-        tableBody.append('<tr><td colspan="7" class="center aligned">Nenhum dado disponível</td></tr>');
-    }
-    
     // Create analytics charts
     createAnalyticsCharts(data);
 }
@@ -844,7 +884,7 @@ function createWeightChart(data) {
     if (data.length === 0) return;
     
     const labels = data.map(record => formatDate(record.weight_date));
-    const weights = data.map(record => record.weight);
+    const weights = data.map(record => parseFloat(record.weight) || 0);
     
     window.weightChart = new Chart(ctx, {
         type: 'line',
