@@ -36,6 +36,24 @@ CREATE TABLE users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE milk_price_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT,             -- Foreign key for companies table (if exists)
+    user_id INT,                -- Foreign key for users table (if exists)
+    state VARCHAR(50),          -- State related to the milk price
+    record_date DATE NOT NULL,  -- Month/Year of the record (using the first day of the month)
+    gross_price_max DECIMAL(10,4),
+    net_price_min DECIMAL(10,4),
+    net_price_avg DECIMAL(10,4),
+    net_price_max DECIMAL(10,4),
+    dairy_percentage DECIMAL(5,2), -- Likely represents a percentage from the dairy
+    rural_producer_pair_price DECIMAL(10,4) -- Column for the final price paid to the rural producer
+
+    -- Add foreign keys if 'companies' and 'users' tables exist
+    -- FOREIGN KEY (company_id) REFERENCES companies(id),
+    -- FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 -- Exemplo de tabela de logs (opcional)
 CREATE TABLE logs (
     id INT AUTO_INCREMENT PRIMARY KEY,

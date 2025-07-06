@@ -56,9 +56,9 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
-      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
-      - ./init-n8n-db.sql:/docker-entrypoint-initdb.d/02-init-n8n-db.sql
+       - db_data:/var/lib/mysql
+       - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
+       - ./init-n8n-db.sql:/docker-entrypoint-initdb.d/02-init-n8n-db.sql
     environment:
       - MYSQL_ROOT_PASSWORD=root_password
       - MYSQL_DATABASE=kognia_one_db
@@ -101,5 +101,5 @@ networks:
     driver: bridge
 
 volumes:
-  mysql-data:
+  db_data:
   n8n-data:

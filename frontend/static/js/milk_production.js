@@ -8,20 +8,28 @@ let totalPages = 1;
 let animalsList = [];
 let currentMilkPrice = 2.50; // Preço padrão do leite
 let loadingAnimals = false; // Flag para evitar chamadas múltiplas
+let priceHistoryPage = 1; // Página atual do histórico de preços
+const priceHistoryPageSize = 6; // Tamanho da página do histórico de preços
 
 // Inicialização quando o documento estiver pronto
 $(document).ready(function() {
     // Inicializa os componentes do Semantic UI
     $('.ui.dropdown').dropdown();
+    $('.ui.modal').modal();
     
     // Carrega os dados iniciais
     loadDashboardData();
     loadAnimals();
     loadProductionEntries(currentPage);
+    loadCurrentMilkPrice();
     
     // Configura os eventos
     setupEventListeners();
     setupDateFilters();
+    setupMilkPriceModal();
+    
+    // Inicializa os modais
+    console.log('Inicializando modais...');
 });
 
 // Carrega os dados do dashboard
@@ -409,8 +417,14 @@ function confirmDeleteEntry(entryId) {
 
 // Configura os eventos de formulários e botões
 function setupEventListeners() {
+    // Botão de edição do preço do leite
+    $('#edit-milk-price').on('click', function() {
+        $('#milk-price-modal').modal('show');
+        openMilkPriceModal();
+    });
+    
     // Formulário de registro de produção
-    $('form.ui.form:not(#animal-form):not(#edit-form)').on('submit', function(e) {
+    $('form.ui.form:not(#animal-form):not(#edit-form):not(#milk-price-form)').on('submit', function(e) {
         e.preventDefault();
         
         // Cria o objeto base de dados

@@ -66,7 +66,10 @@
         </div>
         <div class="column">
             <div class="ui centered card yellow">
-                <div class="content center aligned">
+                <div class="content center aligned" style="position: relative;">
+                    <button class="ui mini circular icon button" id="edit-milk-price" style="position: absolute; top: 5px; right: 5px;">
+                        <i class="edit icon"></i>
+                    </button>
                     <div class="ui statistic">
                         <div class="value" id="milk-price">R$ 2,50</div>
                         <div class="label">Valor por Litro</div>
@@ -318,4 +321,68 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script src="{{ url_for('static', filename='js/milk_production.js') }}"></script>
+<script src="{{ url_for('static', filename='js/milk_price.js') }}"></script>
+{% endblock %}
+
+{% block modals %}
+<!-- Modal para Gerenciamento do Preço do Leite -->
+<div class="ui modal" id="milk-price-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Gerenciamento do Preço do Leite
+    </div>
+    <div class="content">
+        <form class="ui form" id="milk-price-form">
+            <div class="three fields">
+                <div class="field">
+                    <label>Mês Vigente</label>
+                    <input type="text" id="current-month" readonly>
+                </div>
+                <div class="field">
+                    <label>Valor do Mês (R$/L)</label>
+                    <input type="number" id="net-price-avg" step="0.01" min="0" required>
+                </div>
+                <div class="field">
+                    <label>Margem Aplicada (%)</label>
+                    <input type="number" id="dairy-percentage" step="0.01" min="0" max="100" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>Valor do Litro de Leite (R$)</label>
+                <input type="text" id="milk-price-value" readonly>
+            </div>
+        </form>
+
+        <div class="ui divider"></div>
+        
+        <h4 class="ui header">Histórico de Preços</h4>
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Estado</th>
+                    <th>Mês</th>
+                    <th>Valor Médio (R$)</th>
+                    <th>Margem (%)</th>
+                    <th>Valor Final (R$)</th>
+                </tr>
+            </thead>
+            <tbody id="price-history-table">
+                <!-- Dados serão carregados dinamicamente -->
+            </tbody>
+        </table>
+        
+        <div class="ui pagination menu" id="price-history-pagination">
+            <!-- Paginação será carregada dinamicamente -->
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-milk-price-button">
+            Atualizar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
 {% endblock %}

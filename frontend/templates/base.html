@@ -92,6 +92,9 @@
                     <a class="item {% if active_submenu == 'milk_production' %}active{% endif %}" href="{{ url_for('operations.milk_production') }}">
                         <i class="tint icon"></i> Produção de Leite (dia)
                     </a>
+                    <a class="item {% if active_submenu == 'beef_cattle' %}active{% endif %}" href="{{ url_for('operations.beef_cattle') }}">
+                        <i class="paw icon"></i> Boi Gordo
+                    </a>
                 </div>
             </div>
             
@@ -114,5 +117,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
     <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
     {% block extra_js %}{% endblock %}
+    {% block modals %}{% endblock %}
 </body>
 </html>

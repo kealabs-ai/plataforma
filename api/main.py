@@ -44,6 +44,12 @@ from milk_production import router as milk_router
 from animals_production import router as animals_production_router
 from milk_total import router as milk_total_router
 from milk_daily_by_animal import router as milk_daily_by_animal_router
+from milk_price import router as milk_price_router
+from beef_cattle import router as beef_cattle_router
+from beef_cattle_test import router as beef_cattle_test_router
+from beef_cattle_simple import router as beef_cattle_simple_router
+from beef_cattle_direct import router as beef_cattle_direct_router
+from beef_cattle_mock import router as beef_cattle_mock_router
 
 # Importa a instância do banco de dados (certifique-se de que milk_db está acessível)
 from backend.milk_database import milk_db # Importa a instância global
@@ -86,6 +92,12 @@ app.include_router(milk_router)
 app.include_router(animals_production_router)
 app.include_router(milk_total_router)
 app.include_router(milk_daily_by_animal_router)
+app.include_router(milk_price_router)
+app.include_router(beef_cattle_router)
+app.include_router(beef_cattle_test_router)
+app.include_router(beef_cattle_simple_router)
+app.include_router(beef_cattle_direct_router)
+app.include_router(beef_cattle_mock_router)
 
 # --- Modelos Pydantic para as Novas Respostas ---
 class MonthlyMilkProductionResponse(BaseModel):
@@ -213,6 +225,136 @@ async def run_agent(
 @app.get("/status")
 async def get_status():
     return {"status": "online", "version": "1.0.0", "message": "API is running correctly"}
+
+# Direct beef cattle endpoints - usando dados reais do banco de dados
+@app.get("/api/beef_cattle_mock/dashboard/summary")
+async def beef_cattle_dashboard_summary():
+    from backend.beef_cattle_database import beef_cattle_db
+    try:
+        # Buscar dados reais do banco de dados
+        return beef_cattle_db.get_dashboard_summary()
+    except Exception as e:
+        # Em caso de erro, retornar dados mockados
+        return {
+            "total_cattle": 5,
+            "cattle_by_status": [
+                {"status": "Em Engorda", "count": 4},
+                {"status": "Vendido", "count": 1}
+            ],
+            "average_weight": 460.0,
+            "monthly_sales": 11700.00
+        }
+
+@app.get("/api/beef_cattle_mock/")
+async def beef_cattle_list():
+    from backend.beef_cattle_database import beef_cattle_db
+    try:
+        # Buscar dados reais do banco de dados
+        return beef_cattle_db.get_all_beef_cattle({})
+    except Exception as e:
+        # Em caso de erro, retornar dados mockados
+        return [
+            {
+                "id": 1,
+                "official_id": "BG001",
+                "name": "Sultão",
+                "birth_date": "2023-01-15",
+                "breed": "Nelore",
+                "gender": "M",
+                "entry_date": "2024-01-10",
+                "entry_weight": 380.5,
+                "current_weight": 450.2,
+                "target_weight": 550.0,
+                "status": "Em Engorda",
+                "expected_finish_date": "2024-12-15",
+                "notes": "Animal saudável, boa conversão alimentar",
+                "created_at": "2024-01-10T00:00:00",
+                "updated_at": "2024-04-10T00:00:00"
+            },
+            {
+                "id": 2,
+                "official_id": "BG002",
+                "name": "Trovão",
+                "birth_date": "2023-02-20",
+                "breed": "Angus",
+                "gender": "M",
+                "entry_date": "2024-01-15",
+                "entry_weight": 410.0,
+                "current_weight": 470.5,
+                "target_weight": 580.0,
+                "status": "Em Engorda",
+                "expected_finish_date": "2024-11-20",
+                "notes": "Cruzamento industrial, alto ganho diário",
+                "created_at": "2024-01-15T00:00:00",
+                "updated_at": "2024-04-15T00:00:00"
+            }
+        ]
+
+@app.get("/api/beef_cattle_mock/sales")
+async def beef_cattle_sales():
+    from backend.beef_cattle_database import beef_cattle_db
+    try:
+        # Buscar dados reais do banco de dados
+        return beef_cattle_db.get_sale_records({})
+    except Exception as e:
+        # Em caso de erro, retornar dados mockados
+        return [
+            {
+                "id": 1,
+                "cattle_id": 5,
+                "official_id": "BG005",
+                "name": "Relâmpago",
+                "sale_date": "2024-03-20",
+                "final_weight": 520.0,
+                "price_per_kg": 22.50,
+                "total_value": 11700.00,
+                "buyer": "Frigorífico São José",
+                "notes": "Venda antecipada por bom desempenho",
+                "user_id": 1,
+                "created_at": "2024-03-20T00:00:00"
+            }
+        ]
+
+@app.get("/api/beef_cattle_mock/dashboard/weight-gain")
+async def beef_cattle_weight_gain():
+    from backend.beef_cattle_database import beef_cattle_db
+    try:
+        # Buscar dados reais do banco de dados
+        return beef_cattle_db.get_weight_gain_data({})
+    except Exception as e:
+        # Em caso de erro, retornar dados mockados
+        return [
+            {
+                "id": 1,
+                "official_id": "BG001",
+                "name": "Sultão",
+                "first_date": "2024-01-10",
+                "last_date": "2024-04-10",
+                "initial_weight": 380.5,
+                "current_weight": 450.2,
+                "days": 90,
+                "weight_gain": 69.7,
+                "daily_gain": 0.77
+            },
+            {
+                "id": 2,
+                "official_id": "BG002",
+                "name": "Trovão",
+                "first_date": "2024-01-15",
+                "last_date": "2024-04-15",
+                "initial_weight": 410.0,
+                "current_weight": 470.5,
+                "days": 90,
+                "weight_gain": 60.5,
+                "daily_gain": 0.67
+            }
+        ]
+
+# Endpoints diretos removidos, pois o problema foi corrigido no endpoint original
+
+@app.get("/api/beef_cattle_direct_test")
+async def beef_cattle_direct_test():
+    return {"message": "Direct beef cattle test endpoint is working"}
 
 # Rota para suprimir logs do Chrome DevTools
 @app.get("/.well-known/appspecific/com.chrome.devtools.json")

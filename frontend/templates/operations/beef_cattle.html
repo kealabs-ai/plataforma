@@ -1,0 +1,617 @@
+{% extends "base.html" %}
+
+{% block title %}Boi Gordo - Kognia Agro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+<style>
+    .ui.statistics .statistic > .value {
+        font-size: 2.5rem !important;
+    }
+    .ui.statistics .statistic > .label {
+        font-size: 1rem !important;
+    }
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .ui.table th {
+        background-color: #f9fafb;
+    }
+    .weight-gain-positive {
+        color: green;
+    }
+    .weight-gain-negative {
+        color: red;
+    }
+    .filter-section {
+        margin-bottom: 20px;
+    }
+    .tab-content {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ui container">
+    <h1 class="ui header">
+        <i class="paw icon"></i>
+        <div class="content">
+            Controle de Boi Gordo
+            <div class="sub header">Gerenciamento de bovinos para engorda</div>
+        </div>
+    </h1>
+
+    <div class="ui divider"></div>
+
+    <!-- Dashboard Cards -->
+    <div class="ui four statistics">
+        <div class="statistic">
+            <div class="value" id="total-cattle">0</div>
+            <div class="label">Total de Bovinos</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="active-cattle">0</div>
+            <div class="label">Em Engorda</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="avg-weight">0</div>
+            <div class="label">Peso Médio (kg)</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="monthly-sales">R$ 0</div>
+            <div class="label">Vendas do Mês</div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Tabs Menu -->
+    <div class="ui top attached tabular menu">
+        <a class="active item" data-tab="cattle-list">Lista de Bovinos</a>
+        <a class="item" data-tab="weight-records">Controle de Peso</a>
+        <a class="item" data-tab="feeding-records">Alimentação</a>
+        <a class="item" data-tab="health-records">Saúde</a>
+        <a class="item" data-tab="sales-records">Vendas</a>
+        <a class="item" data-tab="analytics">Análises</a>
+    </div>
+
+    <!-- Cattle List Tab -->
+    <div class="ui bottom attached active tab segment" data-tab="cattle-list">
+        <div class="filter-section">
+            <div class="ui form">
+                <div class="four fields">
+                    <div class="field">
+                        <label>Status</label>
+                        <select class="ui dropdown" id="status-filter">
+                            <option value="">Todos</option>
+                            <option value="Em Engorda">Em Engorda</option>
+                            <option value="Vendido">Vendido</option>
+                            <option value="Abatido">Abatido</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Raça</label>
+                        <select class="ui dropdown" id="breed-filter">
+                            <option value="">Todas</option>
+                            <option value="Nelore">Nelore</option>
+                            <option value="Angus">Angus</option>
+                            <option value="Brahman">Brahman</option>
+                            <option value="Hereford">Hereford</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Peso Mínimo (kg)</label>
+                        <input type="number" id="min-weight-filter">
+                    </div>
+                    <div class="field">
+                        <label>Peso Máximo (kg)</label>
+                        <input type="number" id="max-weight-filter">
+                    </div>
+                </div>
+                <button class="ui primary button" id="apply-filters">Aplicar Filtros</button>
+                <button class="ui button" id="clear-filters">Limpar Filtros</button>
+            </div>
+        </div>
+
+        <button class="ui green button" id="add-cattle-btn">
+            <i class="plus icon"></i> Adicionar Bovino
+        </button>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Raça</th>
+                    <th>Data Entrada</th>
+                    <th>Peso Entrada (kg)</th>
+                    <th>Peso Atual (kg)</th>
+                    <th>Ganho (kg)</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="cattle-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="cattle-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Weight Records Tab -->
+    <div class="ui bottom attached tab segment" data-tab="weight-records">
+        <div class="ui form">
+            <div class="fields">
+                <div class="eight wide field">
+                    <label>Selecione o Bovino</label>
+                    <select class="ui dropdown" id="weight-cattle-select">
+                        <option value="">Selecione um bovino</option>
+                        <!-- Opções serão carregadas via JavaScript -->
+                    </select>
+                </div>
+                <div class="eight wide field">
+                    <label>&nbsp;</label>
+                    <button class="ui primary button" id="add-weight-btn">
+                        <i class="plus icon"></i> Registrar Nova Pesagem
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="weight-chart"></canvas>
+        </div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Peso (kg)</th>
+                    <th>Diferença (kg)</th>
+                    <th>Observações</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="weight-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="weight-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Feeding Records Tab -->
+    <div class="ui bottom attached tab segment" data-tab="feeding-records">
+        <div class="ui form">
+            <div class="fields">
+                <div class="eight wide field">
+                    <label>Selecione o Bovino</label>
+                    <select class="ui dropdown" id="feeding-cattle-select">
+                        <option value="">Selecione um bovino</option>
+                        <!-- Opções serão carregadas via JavaScript -->
+                    </select>
+                </div>
+                <div class="eight wide field">
+                    <label>&nbsp;</label>
+                    <button class="ui primary button" id="add-feeding-btn">
+                        <i class="plus icon"></i> Registrar Alimentação
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo de Alimento</th>
+                    <th>Quantidade</th>
+                    <th>Unidade</th>
+                    <th>Observações</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="feeding-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="feeding-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Health Records Tab -->
+    <div class="ui bottom attached tab segment" data-tab="health-records">
+        <div class="ui form">
+            <div class="fields">
+                <div class="eight wide field">
+                    <label>Selecione o Bovino</label>
+                    <select class="ui dropdown" id="health-cattle-select">
+                        <option value="">Selecione um bovino</option>
+                        <!-- Opções serão carregadas via JavaScript -->
+                    </select>
+                </div>
+                <div class="eight wide field">
+                    <label>&nbsp;</label>
+                    <button class="ui primary button" id="add-health-btn">
+                        <i class="plus icon"></i> Registrar Ocorrência de Saúde
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Medicamento</th>
+                    <th>Dosagem</th>
+                    <th>Observações</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="health-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="health-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Sales Records Tab -->
+    <div class="ui bottom attached tab segment" data-tab="sales-records">
+        <button class="ui green button" id="add-sale-btn">
+            <i class="plus icon"></i> Registrar Venda
+        </button>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>ID Bovino</th>
+                    <th>Nome</th>
+                    <th>Peso Final (kg)</th>
+                    <th>Preço/kg (R$)</th>
+                    <th>Valor Total (R$)</th>
+                    <th>Comprador</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="sales-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="sales-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div class="ui bottom attached tab segment" data-tab="analytics">
+        <div class="ui two column grid">
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="weight-gain-chart"></canvas>
+                </div>
+            </div>
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="sales-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="ui header">Desempenho de Ganho de Peso</h3>
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Peso Inicial (kg)</th>
+                    <th>Peso Atual (kg)</th>
+                    <th>Ganho Total (kg)</th>
+                    <th>Dias em Engorda</th>
+                    <th>Ganho Diário (kg)</th>
+                </tr>
+            </thead>
+            <tbody id="performance-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="performance-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Add Cattle Modal -->
+<div class="ui modal" id="add-cattle-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Adicionar Novo Bovino
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-cattle-form">
+            <div class="two fields">
+                <div class="field">
+                    <label>ID Oficial (Brinco)</label>
+                    <input type="text" name="official_id" required>
+                </div>
+                <div class="field">
+                    <label>Nome</label>
+                    <input type="text" name="name">
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Data de Nascimento</label>
+                    <input type="date" name="birth_date" required>
+                </div>
+                <div class="field">
+                    <label>Raça</label>
+                    <select class="ui dropdown" name="breed">
+                        <option value="">Selecione</option>
+                        <option value="Nelore">Nelore</option>
+                        <option value="Angus">Angus</option>
+                        <option value="Brahman">Brahman</option>
+                        <option value="Hereford">Hereford</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Sexo</label>
+                    <select class="ui dropdown" name="gender" required>
+                        <option value="">Selecione</option>
+                        <option value="M">Macho</option>
+                        <option value="F">Fêmea</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Data de Entrada</label>
+                    <input type="date" name="entry_date" required>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Peso de Entrada (kg)</label>
+                    <input type="number" step="0.01" name="entry_weight" required>
+                </div>
+                <div class="field">
+                    <label>Peso Alvo (kg)</label>
+                    <input type="number" step="0.01" name="target_weight">
+                </div>
+            </div>
+            <div class="field">
+                <label>Data Prevista para Término</label>
+                <input type="date" name="expected_finish_date">
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-cattle-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Weight Record Modal -->
+<div class="ui modal" id="add-weight-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Registrar Nova Pesagem
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-weight-form">
+            <input type="hidden" name="cattle_id" id="weight-cattle-id">
+            <div class="two fields">
+                <div class="field">
+                    <label>Data da Pesagem</label>
+                    <input type="date" name="weight_date" required>
+                </div>
+                <div class="field">
+                    <label>Peso (kg)</label>
+                    <input type="number" step="0.01" name="weight" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-weight-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Feeding Record Modal -->
+<div class="ui modal" id="add-feeding-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Registrar Alimentação
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-feeding-form">
+            <input type="hidden" name="cattle_id" id="feeding-cattle-id">
+            <div class="two fields">
+                <div class="field">
+                    <label>Data</label>
+                    <input type="date" name="feeding_date" required>
+                </div>
+                <div class="field">
+                    <label>Tipo de Alimento</label>
+                    <select class="ui dropdown" name="feed_type" required>
+                        <option value="">Selecione</option>
+                        <option value="Ração">Ração</option>
+                        <option value="Silagem">Silagem</option>
+                        <option value="Feno">Feno</option>
+                        <option value="Pasto">Pasto</option>
+                        <option value="Suplemento">Suplemento</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Quantidade</label>
+                    <input type="number" step="0.01" name="quantity" required>
+                </div>
+                <div class="field">
+                    <label>Unidade</label>
+                    <select class="ui dropdown" name="unit" required>
+                        <option value="">Selecione</option>
+                        <option value="kg">kg</option>
+                        <option value="g">g</option>
+                        <option value="L">L</option>
+                        <option value="ml">ml</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-feeding-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Health Record Modal -->
+<div class="ui modal" id="add-health-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Registrar Ocorrência de Saúde
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-health-form">
+            <input type="hidden" name="cattle_id" id="health-cattle-id">
+            <div class="two fields">
+                <div class="field">
+                    <label>Data</label>
+                    <input type="date" name="record_date" required>
+                </div>
+                <div class="field">
+                    <label>Tipo</label>
+                    <select class="ui dropdown" name="record_type" required>
+                        <option value="">Selecione</option>
+                        <option value="Vacinação">Vacinação</option>
+                        <option value="Medicação">Medicação</option>
+                        <option value="Exame">Exame</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label>Descrição</label>
+                <input type="text" name="description" required>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Medicamento</label>
+                    <input type="text" name="medicine">
+                </div>
+                <div class="field">
+                    <label>Dosagem</label>
+                    <input type="text" name="dosage">
+                </div>
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-health-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Sale Record Modal -->
+<div class="ui modal" id="add-sale-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Registrar Venda
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-sale-form">
+            <div class="field">
+                <label>Bovino</label>
+                <select class="ui dropdown" name="cattle_id" id="sale-cattle-select" required>
+                    <option value="">Selecione um bovino</option>
+                    <!-- Opções serão carregadas via JavaScript -->
+                </select>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Data da Venda</label>
+                    <input type="date" name="sale_date" required>
+                </div>
+                <div class="field">
+                    <label>Peso Final (kg)</label>
+                    <input type="number" step="0.01" name="final_weight" required>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Preço por kg (R$)</label>
+                    <input type="number" step="0.01" name="price_per_kg" required>
+                </div>
+                <div class="field">
+                    <label>Valor Total (R$)</label>
+                    <input type="number" step="0.01" name="total_value" id="total-value" readonly>
+                </div>
+            </div>
+            <div class="field">
+                <label>Comprador</label>
+                <input type="text" name="buyer">
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-sale-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
+<script src="{{ url_for('static', filename='js/beef_cattle.js') }}"></script>
+{% endblock %}

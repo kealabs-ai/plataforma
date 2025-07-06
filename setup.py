@@ -10,7 +10,7 @@ setup(
     name="kognia-one",
     version="0.1.0",
     author="Kognia",
-    author_email="kogniaone@gmail.com",
+    author_email="kognia.ai@gmail.com",
     description="Plataforma integrada Kognia One com suporte a múltiplos modelos de IA",
     long_description=long_description,
     long_description_content_type="text/markdown",
