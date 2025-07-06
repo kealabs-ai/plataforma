@@ -743,21 +743,38 @@ function loadAnalyticsData(filters = {}, page = 1, pageSize = 10) {
         timeout: 10000, // Aumentar o timeout para 10 segundos
         success: function(response) {
             // Verificar se a resposta tem a estrutura esperada
-            if (response && response.items && response.page && response.total_items) {
-                // Armazenar todos os dados para uso posterior
-                if (page === 1) {
-                    allAnalyticsData = response.items;
-                } else {
-                    allAnalyticsData = allAnalyticsData.concat(response.items);
+            if (response && typeof response === 'object') {
+                let items = [];
+                let responseObj = {};
+                
+                // Verificar se a resposta tem a estrutura esperada com items
+                if (response.items && Array.isArray(response.items)) {
+                    items = response.items;
+                    responseObj = response;
+                } 
+                // Verificar se a resposta é um array direto
+                else if (Array.isArray(response)) {
+                    items = response;
+                    responseObj = {
+                        items: items,
+                        page: parseInt(page) || 1,
+                        page_size: parseInt(pageSize) || 10,
+                        total_items: items.length,
+                        total_pages: Math.ceil(items.length / (parseInt(pageSize) || 10))
+                    };
                 }
-                
-                renderAnalyticsData(response.items);
-                renderPagination(response, 'performance-pagination', loadAnalyticsData, filters);
-            } else {
-                // Se a resposta não tem a estrutura esperada, tratar como array direto
-                console.warn('Resposta não tem a estrutura esperada:', response);
-                
-                const items = Array.isArray(response) ? response : [];
+                // Caso não seja nem array nem objeto com items
+                else {
+                    console.warn('Resposta não tem a estrutura esperada:', response);
+                    items = [];
+                    responseObj = {
+                        items: items,
+                        page: parseInt(page) || 1,
+                        page_size: parseInt(pageSize) || 10,
+                        total_items: 0,
+                        total_pages: 1
+                    };
+                }
                 
                 // Armazenar todos os dados para uso posterior
                 if (page === 1) {
@@ -766,17 +783,23 @@ function loadAnalyticsData(filters = {}, page = 1, pageSize = 10) {
                     allAnalyticsData = allAnalyticsData.concat(items);
                 }
                 
-                // Criar resposta paginada mockada
-                const mockResponse = {
-                    items: items,
+                renderAnalyticsData(items);
+                renderPagination(responseObj, 'performance-pagination', loadAnalyticsData, filters);
+            } else {
+                // Se a resposta não é um objeto válido
+                console.error('Resposta inválida:', response);
+                
+                // Criar resposta vazia
+                const emptyResponse = {
+                    items: [],
                     page: parseInt(page) || 1,
                     page_size: parseInt(pageSize) || 10,
-                    total_items: items.length,
-                    total_pages: Math.ceil(items.length / (parseInt(pageSize) || 10))
+                    total_items: 0,
+                    total_pages: 1
                 };
                 
-                renderAnalyticsData(mockResponse.items);
-                renderPagination(mockResponse, 'performance-pagination', loadAnalyticsData, filters);
+                renderAnalyticsData([]);
+                renderPagination(emptyResponse, 'performance-pagination', loadAnalyticsData, filters);
             }
         },
         error: function(error) {
@@ -927,13 +950,24 @@ function createAnalyticsCharts(data) {
         window.weightGainChart.destroy();
     }
     
-    if (data.length === 0) return;
+    if (!data || data.length === 0) return;
+    
+    // Verificar se allAnalyticsData existe e tem dados
+    const hasAllData = Array.isArray(allAnalyticsData) && allAnalyticsData.length > 0;
     
     // Limitar a 10 registros para melhor visualização
-    const chartData = allAnalyticsData.length > 0 ? allAnalyticsData.slice(0, 10) : data.slice(0, 10);
+    const chartData = hasAllData ? allAnalyticsData.slice(0, 10) : data.slice(0, 10);
     
-    const labels = chartData.map(record => record.official_id + (record.name ? ` - ${record.name}` : ''));
-    const dailyGains = chartData.map(record => parseFloat(record.daily_gain) || 0);
+    // Garantir que cada registro tenha os campos necessários
+    const labels = chartData.map(record => {
+        if (!record) return 'Desconhecido';
+        return (record.official_id || 'ID?') + (record.name ? ` - ${record.name}` : '');
+    });
+    
+    const dailyGains = chartData.map(record => {
+        if (!record || record.daily_gain === undefined) return 0;
+        return parseFloat(record.daily_gain) || 0;
+    });
     
     window.weightGainChart = new Chart(weightGainCtx, {
         type: 'bar',
