@@ -76,16 +76,24 @@ function renderPagination(response, containerId, loadFunction, filters = {}) {
     container.append(pagination);
     
     // Adicionar informações sobre os itens exibidos
-    if (response.total_items) {
-        const startItem = (response.page - 1) * response.page_size + 1;
-        const endItem = Math.min(startItem + response.page_size - 1, response.total_items);
+    if (response.total_items !== undefined) {
+        // Garantir que os valores sejam números inteiros
+        const page = parseInt(response.page) || 1;
+        const pageSize = parseInt(response.page_size) || 10;
+        const totalItems = parseInt(response.total_items) || 0;
         
-        const infoText = $(`
-            <div class="ui small text" style="margin-top: 10px; text-align: center;">
-                Mostrando ${startItem} a ${endItem} de ${response.total_items} registros
-            </div>
-        `);
+        const startItem = (page - 1) * pageSize + 1;
+        const endItem = Math.min(startItem + pageSize - 1, totalItems);
         
-        container.append(infoText);
+        // Verificar se os valores são válidos antes de exibir
+        if (!isNaN(startItem) && !isNaN(endItem) && !isNaN(totalItems) && totalItems > 0) {
+            const infoText = $(`
+                <div class="ui small text" style="margin-top: 10px; text-align: center;">
+                    Mostrando ${startItem} a ${endItem} de ${totalItems} registros
+                </div>
+            `);
+            
+            container.append(infoText);
+        }
     }
 }

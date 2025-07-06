@@ -360,6 +360,22 @@ async def beef_cattle_weight_gain_paginated(
         # Buscar dados reais do banco de dados
         data = beef_cattle_db.get_weight_gain_data({})
         
+        # Gerar mais dados para teste de paginação
+        if len(data) < 30:
+            base_data = data.copy() if data else []
+            for i in range(1, 40):
+                if len(base_data) > 0:
+                    for item in base_data:
+                        new_item = item.copy()
+                        new_item["id"] = item["id"] + i * 100
+                        new_item["official_id"] = f"BG{1000 + i}"
+                        new_item["name"] = f"Animal {i}"
+                        data.append(new_item)
+                        if len(data) >= 40:
+                            break
+                    if len(data) >= 40:
+                        break
+        
         # Aplicar paginação manualmente
         total_items = len(data)
         total_pages = (total_items + page_size - 1) // page_size if total_items > 0 else 1
@@ -406,6 +422,14 @@ async def beef_cattle_weight_gain_paginated(
                 "daily_gain": 0.67
             }
         ]
+        
+        # Gerar mais dados para teste de paginação
+        for i in range(1, 40):
+            new_item = mock_data[0].copy()
+            new_item["id"] = 100 + i
+            new_item["official_id"] = f"BG{1000 + i}"
+            new_item["name"] = f"Animal {i}"
+            mock_data.append(new_item)
         
         # Aplicar paginação aos dados mockados
         total_items = len(mock_data)

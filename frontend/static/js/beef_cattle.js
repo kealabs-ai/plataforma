@@ -733,31 +733,50 @@ function renderSalesData(data) {
     }
 }
 
-function loadAnalyticsData(page = 1, pageSize = 10) {
+// Variável global para armazenar todos os dados de análise
+let allAnalyticsData = [];
+
+function loadAnalyticsData(filters = {}, page = 1, pageSize = 10) {
     $.ajax({
         url: API_URL + `/api/beef_cattle/dashboard/weight-gain?page=${page}&page_size=${pageSize}`,
         method: 'GET',
         timeout: 10000, // Aumentar o timeout para 10 segundos
         success: function(response) {
             // Verificar se a resposta tem a estrutura esperada
-            if (response && response.items) {
+            if (response && response.items && response.page && response.total_items) {
+                // Armazenar todos os dados para uso posterior
+                if (page === 1) {
+                    allAnalyticsData = response.items;
+                } else {
+                    allAnalyticsData = allAnalyticsData.concat(response.items);
+                }
+                
                 renderAnalyticsData(response.items);
-                renderPagination(response, 'performance-pagination', loadAnalyticsData, {});
+                renderPagination(response, 'performance-pagination', loadAnalyticsData, filters);
             } else {
                 // Se a resposta não tem a estrutura esperada, tratar como array direto
                 console.warn('Resposta não tem a estrutura esperada:', response);
                 
+                const items = Array.isArray(response) ? response : [];
+                
+                // Armazenar todos os dados para uso posterior
+                if (page === 1) {
+                    allAnalyticsData = items;
+                } else {
+                    allAnalyticsData = allAnalyticsData.concat(items);
+                }
+                
                 // Criar resposta paginada mockada
                 const mockResponse = {
-                    items: Array.isArray(response) ? response : [],
-                    page: page,
-                    page_size: pageSize,
-                    total_items: Array.isArray(response) ? response.length : 0,
-                    total_pages: Math.ceil((Array.isArray(response) ? response.length : 0) / pageSize)
+                    items: items,
+                    page: parseInt(page) || 1,
+                    page_size: parseInt(pageSize) || 10,
+                    total_items: items.length,
+                    total_pages: Math.ceil(items.length / (parseInt(pageSize) || 10))
                 };
                 
                 renderAnalyticsData(mockResponse.items);
-                renderPagination(mockResponse, 'performance-pagination', loadAnalyticsData, {});
+                renderPagination(mockResponse, 'performance-pagination', loadAnalyticsData, filters);
             }
         },
         error: function(error) {
@@ -790,17 +809,24 @@ function loadAnalyticsData(page = 1, pageSize = 10) {
                 }
             ];
             
+            // Armazenar todos os dados para uso posterior
+            if (page === 1) {
+                allAnalyticsData = mockData;
+            } else {
+                allAnalyticsData = allAnalyticsData.concat(mockData);
+            }
+            
             // Criar resposta paginada mockada
             const mockResponse = {
                 items: mockData,
-                page: page,
-                page_size: pageSize,
+                page: parseInt(page) || 1,
+                page_size: parseInt(pageSize) || 10,
                 total_items: mockData.length,
-                total_pages: Math.ceil(mockData.length / pageSize)
+                total_pages: Math.ceil(mockData.length / (parseInt(pageSize) || 10))
             };
             
             renderAnalyticsData(mockResponse.items);
-            renderPagination(mockResponse, 'performance-pagination', loadAnalyticsData, {});
+            renderPagination(mockResponse, 'performance-pagination', loadAnalyticsData, filters);
         }
     });
 }
@@ -813,34 +839,7 @@ function renderAnalyticsData(data) {
     if (!Array.isArray(data)) {
         console.error('Dados recebidos não são um array:', data);
         tableBody.append('<tr><td colspan="7" class="center aligned">Erro ao carregar dados</td></tr>');
-        
-        // Usar dados mockados para o gráfico
-        data = [
-            {
-                "id": 1,
-                "official_id": "BG001",
-                "name": "Sultão",
-                "first_date": "2024-01-10",
-                "last_date": "2024-04-10",
-                "initial_weight": 380.5,
-                "current_weight": 450.2,
-                "days": 90,
-                "weight_gain": 69.7,
-                "daily_gain": 0.77
-            },
-            {
-                "id": 2,
-                "official_id": "BG002",
-                "name": "Trovão",
-                "first_date": "2024-01-15",
-                "last_date": "2024-04-15",
-                "initial_weight": 410.0,
-                "current_weight": 470.5,
-                "days": 90,
-                "weight_gain": 60.5,
-                "daily_gain": 0.67
-            }
-        ];
+        return;
     }
     
     if (data.length === 0) {
@@ -868,7 +867,7 @@ function renderAnalyticsData(data) {
         `);
     });
     
-    // Create analytics charts
+    // Create analytics charts com os dados da página atual
     createAnalyticsCharts(data);
 }
 
@@ -930,8 +929,11 @@ function createAnalyticsCharts(data) {
     
     if (data.length === 0) return;
     
-    const labels = data.map(record => record.official_id + (record.name ? ` - ${record.name}` : ''));
-    const dailyGains = data.map(record => record.daily_gain);
+    // Limitar a 10 registros para melhor visualização
+    const chartData = allAnalyticsData.length > 0 ? allAnalyticsData.slice(0, 10) : data.slice(0, 10);
+    
+    const labels = chartData.map(record => record.official_id + (record.name ? ` - ${record.name}` : ''));
+    const dailyGains = chartData.map(record => parseFloat(record.daily_gain) || 0);
     
     window.weightGainChart = new Chart(weightGainCtx, {
         type: 'bar',
@@ -1371,6 +1373,8 @@ $(document).ready(function() {
         } else if (tab === 'sales-records') {
             loadSalesRecords();
         } else if (tab === 'analytics') {
+            // Resetar os dados armazenados ao mudar para a aba de análise
+            allAnalyticsData = [];
             loadAnalyticsData();
         }
     });
