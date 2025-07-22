@@ -20,7 +20,7 @@ echo Construindo e iniciando os containers...
 docker-compose up --build -d
 
 echo.
-echo Projeto Kognia One iniciado com sucesso!
+echo Projeto KeaLabs iniciado com sucesso!
 echo.
 echo Frontend: http://localhost:8501
 echo API: http://localhost:8000

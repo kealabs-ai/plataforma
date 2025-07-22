@@ -18,10 +18,10 @@ class MilkDatabaseQuery:
         """Conecta ao banco de dados MySQL"""
         try:
             self.connection = mysql.connector.connect(
-                host=os.getenv("DB_HOST", "localhost"),
-                user=os.getenv("DB_USER", "root"),
-                password=os.getenv("DB_PASSWORD", "root_password"),
-                database=os.getenv("DB_NAME", "kognia_one_db")
+                host=os.getenv("DB_HOST"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                database=os.getenv("DB_NAME")
             )
             print("Conexão com o banco de dados estabelecida com sucesso")
         except Error as e:

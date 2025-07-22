@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict, Any, Optional
 from datetime import date
-from backend.beef_cattle_database_simple import beef_cattle_db_simple
+from database_queries.beef_cattle_database_simple import beef_cattle_db_simple
 
 router = APIRouter(
     prefix="/api/beef_cattle_mock",

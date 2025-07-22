@@ -1,0 +1,865 @@
+{% extends "base.html" %}
+
+{% block title %}Estufas{% endblock %}
+
+{% block content %}
+<div class="ui container">
+    <h1 class="ui header">Gerenciamento de Estufas</h1>
+    
+    <div class="ui grid">
+        <div class="sixteen wide column">
+            <div class="ui segment">
+                <div class="ui top attached tabular menu">
+                    <a class="active item" data-tab="list">Lista de Estufas</a>
+                    <a class="item" data-tab="new">Nova Estufa</a>
+                    <a class="item" data-tab="climate">Registros de Clima</a>
+                </div>
+                
+                <!-- Lista de Estufas -->
+                <div class="ui bottom attached active tab segment" data-tab="list">
+                    <table class="ui celled table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Tipo</th>
+                                <th>Área (m²)</th>
+                                <th>Controle de Temperatura</th>
+                                <th>Controle de Umidade</th>
+                                <th>Sistema de Irrigação</th>
+                                <th>Localização</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="greenhouses-table-body">
+                            <!-- Dados serão carregados via JavaScript -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="ui pagination menu" id="pagination">
+                        <!-- Paginação será gerada via JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Nova Estufa -->
+                <div class="ui bottom attached tab segment" data-tab="new">
+                    <form class="ui form" id="greenhouse-form">
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Nome</label>
+                                <input type="text" name="name" placeholder="Nome da estufa" required>
+                            </div>
+                            <div class="field">
+                                <label>Tipo</label>
+                                <select class="ui dropdown" name="type" required>
+                                    <option value="">Selecione o tipo</option>
+                                    <option value="Vidro">Vidro</option>
+                                    <option value="Plástico">Plástico</option>
+                                    <option value="Policarbonato">Policarbonato</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Área (m²)</label>
+                                <input type="number" step="0.01" name="area_m2" placeholder="Área em m²" required>
+                            </div>
+                            <div class="field">
+                                <label>Localização</label>
+                                <input type="text" name="location" placeholder="Localização da estufa">
+                            </div>
+                        </div>
+                        <div class="three fields">
+                            <div class="field">
+                                <div class="ui checkbox">
+                                    <input type="checkbox" name="temperature_control">
+                                    <label>Controle de Temperatura</label>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="ui checkbox">
+                                    <input type="checkbox" name="humidity_control">
+                                    <label>Controle de Umidade</label>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="ui checkbox">
+                                    <input type="checkbox" name="irrigation_system">
+                                    <label>Sistema de Irrigação</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Observações</label>
+                            <textarea name="notes" rows="3"></textarea>
+                        </div>
+                        <button class="ui primary button" type="submit">Salvar</button>
+                        <button class="ui button" type="reset">Limpar</button>
+                    </form>
+                </div>
+                
+                <!-- Registros de Clima -->
+                <div class="ui bottom attached tab segment" data-tab="climate">
+                    <div class="ui form">
+                        <div class="fields">
+                            <div class="six wide field">
+                                <label>Estufa</label>
+                                <select class="ui dropdown" id="climate-greenhouse-select">
+                                    <option value="">Selecione uma estufa</option>
+                                    <!-- Opções serão carregadas via JavaScript -->
+                                </select>
+                            </div>
+                            <div class="four wide field">
+                                <label>Data Inicial</label>
+                                <input type="date" id="climate-start-date">
+                            </div>
+                            <div class="four wide field">
+                                <label>Data Final</label>
+                                <input type="date" id="climate-end-date">
+                            </div>
+                            <div class="two wide field">
+                                <label>&nbsp;</label>
+                                <button class="ui primary button" id="btn-filter-climate">Filtrar</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="ui green button" id="btn-add-climate">Novo Registro</button>
+                    
+                    <table class="ui celled table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Hora</th>
+                                <th>Temperatura (°C)</th>
+                                <th>Umidade (%)</th>
+                                <th>Nível de Luz</th>
+                                <th>Observações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="climate-records-body">
+                            <!-- Dados serão carregados via JavaScript -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="ui pagination menu" id="climate-pagination">
+                        <!-- Paginação será gerada via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Detalhes -->
+    <div class="ui modal" id="greenhouse-detail-modal">
+        <i class="close icon"></i>
+        <div class="header">Detalhes da Estufa</div>
+        <div class="content">
+            <div class="ui form">
+                <div class="two fields">
+                    <div class="field">
+                        <label>Nome</label>
+                        <input type="text" id="detail-name" readonly>
+                    </div>
+                    <div class="field">
+                        <label>Tipo</label>
+                        <input type="text" id="detail-type" readonly>
+                    </div>
+                </div>
+                <div class="two fields">
+                    <div class="field">
+                        <label>Área (m²)</label>
+                        <input type="text" id="detail-area" readonly>
+                    </div>
+                    <div class="field">
+                        <label>Localização</label>
+                        <input type="text" id="detail-location" readonly>
+                    </div>
+                </div>
+                <div class="three fields">
+                    <div class="field">
+                        <label>Controle de Temperatura</label>
+                        <input type="text" id="detail-temperature-control" readonly>
+                    </div>
+                    <div class="field">
+                        <label>Controle de Umidade</label>
+                        <input type="text" id="detail-humidity-control" readonly>
+                    </div>
+                    <div class="field">
+                        <label>Sistema de Irrigação</label>
+                        <input type="text" id="detail-irrigation-system" readonly>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Observações</label>
+                    <textarea id="detail-notes" readonly rows="3"></textarea>
+                </div>
+            </div>
+            
+            <h4 class="ui dividing header">Cultivos Ativos</h4>
+            <table class="ui celled table">
+                <thead>
+                    <tr>
+                        <th>Espécie</th>
+                        <th>Variedade</th>
+                        <th>Quantidade</th>
+                        <th>Área (m²)</th>
+                        <th>Data de Plantio</th>
+                        <th>Data Esperada de Colheita</th>
+                    </tr>
+                </thead>
+                <tbody id="active-flowers-body">
+                    <!-- Dados serão carregados via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <div class="actions">
+            <button class="ui primary button" id="btn-edit-greenhouse">Editar</button>
+            <div class="ui cancel button">Fechar</div>
+        </div>
+    </div>
+    
+    <!-- Modal de Registro de Clima -->
+    <div class="ui modal" id="climate-modal">
+        <i class="close icon"></i>
+        <div class="header">Novo Registro de Clima</div>
+        <div class="content">
+            <form class="ui form" id="climate-form">
+                <div class="field">
+                    <label>Estufa</label>
+                    <select class="ui dropdown" name="greenhouse_id" id="climate-form-greenhouse-select" required>
+                        <option value="">Selecione uma estufa</option>
+                        <!-- Opções serão carregadas via JavaScript -->
+                    </select>
+                </div>
+                <div class="two fields">
+                    <div class="field">
+                        <label>Data</label>
+                        <input type="date" name="record_date" required>
+                    </div>
+                    <div class="field">
+                        <label>Hora</label>
+                        <input type="time" name="record_time" required>
+                    </div>
+                </div>
+                <div class="three fields">
+                    <div class="field">
+                        <label>Temperatura (°C)</label>
+                        <input type="number" step="0.1" name="temperature" placeholder="Temperatura" required>
+                    </div>
+                    <div class="field">
+                        <label>Umidade (%)</label>
+                        <input type="number" step="0.1" name="humidity" placeholder="Umidade" required>
+                    </div>
+                    <div class="field">
+                        <label>Nível de Luz</label>
+                        <input type="number" step="0.1" name="light_level" placeholder="Nível de luz">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Observações</label>
+                    <textarea name="notes" rows="2"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="actions">
+            <button class="ui primary button" id="btn-save-climate">Salvar</button>
+            <div class="ui cancel button">Cancelar</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Inicializar dropdowns, checkboxes e tabs
+        $('.ui.dropdown').dropdown();
+        $('.ui.checkbox').checkbox();
+        $('.menu .item').tab();
+        
+        // Carregar lista de estufas
+        loadGreenhouses(1);
+        
+        // Configurar eventos
+        $('#greenhouse-form').on('submit', function(e) {
+            e.preventDefault();
+            saveGreenhouse();
+        });
+        
+        $('.menu .item[data-tab="climate"]').on('click', function() {
+            loadGreenhousesForSelect();
+        });
+        
+        $('#btn-filter-climate').on('click', function() {
+            const greenhouseId = $('#climate-greenhouse-select').val();
+            if (greenhouseId) {
+                loadClimateRecords(greenhouseId, 1);
+            } else {
+                showMessage('Selecione uma estufa', 'error');
+            }
+        });
+        
+        $('#btn-add-climate').on('click', function() {
+            loadGreenhousesForClimateForm();
+            $('#climate-modal').modal('show');
+        });
+        
+        $('#btn-save-climate').on('click', function() {
+            saveClimateRecord();
+        });
+    });
+    
+    // Função para carregar lista de estufas
+    function loadGreenhouses(page) {
+        $.ajax({
+            url: '/api/floriculture/endpoints/greenhouses',
+            method: 'GET',
+            data: {
+                page: page,
+                page_size: 10
+            },
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(response) {
+                renderGreenhousesTable(response.items);
+                renderPagination(response.page, response.total_pages, 'pagination', 'loadGreenhouses');
+            },
+            error: function(error) {
+                console.error('Erro ao carregar estufas:', error);
+                showMessage('Erro ao carregar estufas', 'error');
+                
+                // Dados mockados em caso de erro
+                const mockData = {
+                    items: [
+                        {
+                            id: 1,
+                            name: "Estufa Principal",
+                            type: "Vidro",
+                            area_m2: 500.0,
+                            temperature_control: true,
+                            humidity_control: true,
+                            irrigation_system: true,
+                            location: "Setor Norte",
+                            notes: "Estufa para flores delicadas"
+                        },
+                        {
+                            id: 2,
+                            name: "Estufa Secundária",
+                            type: "Plástico",
+                            area_m2: 300.0,
+                            temperature_control: false,
+                            humidity_control: true,
+                            irrigation_system: true,
+                            location: "Setor Sul",
+                            notes: "Estufa para mudas"
+                        }
+                    ],
+                    page: 1,
+                    total_pages: 1
+                };
+                
+                renderGreenhousesTable(mockData.items);
+                renderPagination(mockData.page, mockData.total_pages, 'pagination', 'loadGreenhouses');
+            }
+        });
+    }
+    
+    // Função para renderizar tabela de estufas
+    function renderGreenhousesTable(greenhouses) {
+        const tbody = $('#greenhouses-table-body');
+        tbody.empty();
+        
+        if (greenhouses.length === 0) {
+            tbody.append('<tr><td colspan="9" class="center aligned">Nenhuma estufa encontrada</td></tr>');
+            return;
+        }
+        
+        greenhouses.forEach(function(greenhouse) {
+            const row = `
+                <tr>
+                    <td>${greenhouse.id}</td>
+                    <td>${greenhouse.name}</td>
+                    <td>${greenhouse.type}</td>
+                    <td>${greenhouse.area_m2}</td>
+                    <td>${greenhouse.temperature_control ? 'Sim' : 'Não'}</td>
+                    <td>${greenhouse.humidity_control ? 'Sim' : 'Não'}</td>
+                    <td>${greenhouse.irrigation_system ? 'Sim' : 'Não'}</td>
+                    <td>${greenhouse.location || '-'}</td>
+                    <td>
+                        <button class="ui mini icon button" onclick="viewGreenhouse(${greenhouse.id})"><i class="eye icon"></i></button>
+                        <button class="ui mini icon primary button" onclick="editGreenhouse(${greenhouse.id})"><i class="edit icon"></i></button>
+                        <button class="ui mini icon negative button" onclick="deleteGreenhouse(${greenhouse.id})"><i class="trash icon"></i></button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+    
+    // Função para renderizar paginação
+    function renderPagination(currentPage, totalPages, elementId, callbackName) {
+        const pagination = $(`#${elementId}`);
+        pagination.empty();
+        
+        if (totalPages <= 1) {
+            return;
+        }
+        
+        // Botão anterior
+        pagination.append(`
+            <a class="item ${currentPage === 1 ? 'disabled' : ''}" 
+               onclick="${currentPage > 1 ? callbackName + '(' + (currentPage - 1) + ')' : ''}">
+                <i class="left chevron icon"></i>
+            </a>
+        `);
+        
+        // Páginas
+        for (let i = 1; i <= totalPages; i++) {
+            pagination.append(`
+                <a class="item ${i === currentPage ? 'active' : ''}" 
+                   onclick="${callbackName}(${i})">
+                    ${i}
+                </a>
+            `);
+        }
+        
+        // Botão próximo
+        pagination.append(`
+            <a class="item ${currentPage === totalPages ? 'disabled' : ''}" 
+               onclick="${currentPage < totalPages ? callbackName + '(' + (currentPage + 1) + ')' : ''}">
+                <i class="right chevron icon"></i>
+            </a>
+        `);
+    }
+    
+    // Função para carregar estufas para o select
+    function loadGreenhousesForSelect() {
+        $.ajax({
+            url: '/api/floriculture/endpoints/greenhouses',
+            method: 'GET',
+            data: {
+                page: 1,
+                page_size: 100
+            },
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(response) {
+                const select = $('#climate-greenhouse-select');
+                select.empty();
+                select.append('<option value="">Selecione uma estufa</option>');
+                
+                response.items.forEach(function(greenhouse) {
+                    select.append(`<option value="${greenhouse.id}">${greenhouse.name}</option>`);
+                });
+            },
+            error: function(error) {
+                console.error('Erro ao carregar estufas para select:', error);
+                showMessage('Erro ao carregar estufas', 'error');
+            }
+        });
+    }
+    
+    // Função para carregar estufas para o formulário de clima
+    function loadGreenhousesForClimateForm() {
+        $.ajax({
+            url: '/api/floriculture/endpoints/greenhouses',
+            method: 'GET',
+            data: {
+                page: 1,
+                page_size: 100
+            },
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(response) {
+                const select = $('#climate-form-greenhouse-select');
+                select.empty();
+                select.append('<option value="">Selecione uma estufa</option>');
+                
+                response.items.forEach(function(greenhouse) {
+                    select.append(`<option value="${greenhouse.id}">${greenhouse.name}</option>`);
+                });
+            },
+            error: function(error) {
+                console.error('Erro ao carregar estufas para formulário:', error);
+                showMessage('Erro ao carregar estufas', 'error');
+            }
+        });
+    }
+    
+    // Função para carregar registros de clima
+    function loadClimateRecords(greenhouseId, page) {
+        const startDate = $('#climate-start-date').val();
+        const endDate = $('#climate-end-date').val();
+        
+        $.ajax({
+            url: `/api/floriculture/endpoints/climate/${greenhouseId}`,
+            method: 'GET',
+            data: {
+                page: page,
+                page_size: 10,
+                start_date: startDate,
+                end_date: endDate
+            },
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(response) {
+                renderClimateRecordsTable(response.items);
+                renderPagination(response.page, response.total_pages, 'climate-pagination', `loadClimateRecords.bind(null, ${greenhouseId})`);
+            },
+            error: function(error) {
+                console.error('Erro ao carregar registros de clima:', error);
+                showMessage('Erro ao carregar registros de clima', 'error');
+                
+                // Dados mockados em caso de erro
+                const mockData = {
+                    items: [
+                        {
+                            id: 1,
+                            greenhouse_id: greenhouseId,
+                            greenhouse_name: "Estufa Principal",
+                            record_date: "2024-04-10",
+                            record_time: "08:00",
+                            temperature: 22.5,
+                            humidity: 75.0,
+                            light_level: 800.0,
+                            notes: "Manhã ensolarada"
+                        },
+                        {
+                            id: 2,
+                            greenhouse_id: greenhouseId,
+                            greenhouse_name: "Estufa Principal",
+                            record_date: "2024-04-10",
+                            record_time: "14:00",
+                            temperature: 26.8,
+                            humidity: 65.0,
+                            light_level: 1200.0,
+                            notes: "Pico de temperatura diária"
+                        }
+                    ],
+                    page: 1,
+                    total_pages: 1
+                };
+                
+                renderClimateRecordsTable(mockData.items);
+                renderPagination(mockData.page, mockData.total_pages, 'climate-pagination', `loadClimateRecords.bind(null, ${greenhouseId})`);
+            }
+        });
+    }
+    
+    // Função para renderizar tabela de registros de clima
+    function renderClimateRecordsTable(records) {
+        const tbody = $('#climate-records-body');
+        tbody.empty();
+        
+        if (records.length === 0) {
+            tbody.append('<tr><td colspan="6" class="center aligned">Nenhum registro de clima encontrado</td></tr>');
+            return;
+        }
+        
+        records.forEach(function(record) {
+            const row = `
+                <tr>
+                    <td>${formatDate(record.record_date)}</td>
+                    <td>${record.record_time}</td>
+                    <td>${record.temperature.toFixed(1)}</td>
+                    <td>${record.humidity.toFixed(1)}</td>
+                    <td>${record.light_level ? record.light_level.toFixed(1) : '-'}</td>
+                    <td>${record.notes || '-'}</td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+    
+    // Função para visualizar detalhes de uma estufa
+    function viewGreenhouse(id) {
+        $.ajax({
+            url: `/api/floriculture/endpoints/greenhouses/${id}`,
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(greenhouse) {
+                // Preencher detalhes da estufa
+                $('#detail-name').val(greenhouse.name);
+                $('#detail-type').val(greenhouse.type);
+                $('#detail-area').val(greenhouse.area_m2);
+                $('#detail-location').val(greenhouse.location || '-');
+                $('#detail-temperature-control').val(greenhouse.temperature_control ? 'Sim' : 'Não');
+                $('#detail-humidity-control').val(greenhouse.humidity_control ? 'Sim' : 'Não');
+                $('#detail-irrigation-system').val(greenhouse.irrigation_system ? 'Sim' : 'Não');
+                $('#detail-notes').val(greenhouse.notes || '');
+                
+                // Configurar ID para o botão de edição
+                $('#btn-edit-greenhouse').data('greenhouse-id', id);
+                
+                // Carregar cultivos ativos
+                loadActiveFlowers(id);
+                
+                // Exibir modal
+                $('#greenhouse-detail-modal').modal('show');
+            },
+            error: function(error) {
+                console.error('Erro ao carregar detalhes da estufa:', error);
+                showMessage('Erro ao carregar detalhes da estufa', 'error');
+            }
+        });
+    }
+    
+    // Função para carregar cultivos ativos em uma estufa
+    function loadActiveFlowers(greenhouseId) {
+        $.ajax({
+            url: '/api/floriculture/endpoints/flowers',
+            method: 'GET',
+            data: {
+                greenhouse_id: greenhouseId,
+                status: 'Em Cultivo',
+                page: 1,
+                page_size: 100
+            },
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(response) {
+                const tbody = $('#active-flowers-body');
+                tbody.empty();
+                
+                if (response.items.length === 0) {
+                    tbody.append('<tr><td colspan="6" class="center aligned">Nenhum cultivo ativo nesta estufa</td></tr>');
+                    return;
+                }
+                
+                response.items.forEach(function(flower) {
+                    const row = `
+                        <tr>
+                            <td>${flower.species}</td>
+                            <td>${flower.variety}</td>
+                            <td>${flower.quantity}</td>
+                            <td>${flower.area_m2}</td>
+                            <td>${formatDate(flower.planting_date)}</td>
+                            <td>${flower.expected_harvest_date ? formatDate(flower.expected_harvest_date) : '-'}</td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            },
+            error: function(error) {
+                console.error('Erro ao carregar cultivos ativos:', error);
+                $('#active-flowers-body').html('<tr><td colspan="6" class="center aligned">Erro ao carregar cultivos</td></tr>');
+            }
+        });
+    }
+    
+    // Função para salvar estufa
+    function saveGreenhouse() {
+        const formData = {};
+        $('#greenhouse-form').serializeArray().forEach(function(item) {
+            formData[item.name] = item.value;
+        });
+        
+        // Converter valores numéricos e booleanos
+        formData.area_m2 = parseFloat(formData.area_m2);
+        formData.temperature_control = $('#greenhouse-form [name="temperature_control"]').is(':checked');
+        formData.humidity_control = $('#greenhouse-form [name="humidity_control"]').is(':checked');
+        formData.irrigation_system = $('#greenhouse-form [name="irrigation_system"]').is(':checked');
+        
+        $.ajax({
+            url: '/api/floriculture/endpoints/greenhouses',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(response) {
+                showMessage('Estufa salva com sucesso', 'success');
+                $('#greenhouse-form')[0].reset();
+                $('.menu .item[data-tab="list"]').tab('change tab', 'list');
+                loadGreenhouses(1);
+            },
+            error: function(error) {
+                console.error('Erro ao salvar estufa:', error);
+                showMessage('Erro ao salvar estufa', 'error');
+            }
+        });
+    }
+    
+    // Função para editar estufa
+    function editGreenhouse(id) {
+        $.ajax({
+            url: `/api/floriculture/endpoints/greenhouses/${id}`,
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(greenhouse) {
+                // Preencher formulário
+                $('#greenhouse-form')[0].reset();
+                $('#greenhouse-form [name="name"]').val(greenhouse.name);
+                $('#greenhouse-form [name="type"]').val(greenhouse.type).trigger('change');
+                $('#greenhouse-form [name="area_m2"]').val(greenhouse.area_m2);
+                $('#greenhouse-form [name="location"]').val(greenhouse.location || '');
+                $('#greenhouse-form [name="temperature_control"]').prop('checked', greenhouse.temperature_control).trigger('change');
+                $('#greenhouse-form [name="humidity_control"]').prop('checked', greenhouse.humidity_control).trigger('change');
+                $('#greenhouse-form [name="irrigation_system"]').prop('checked', greenhouse.irrigation_system).trigger('change');
+                $('#greenhouse-form [name="notes"]').val(greenhouse.notes || '');
+                
+                // Mudar para a aba de edição
+                $('.menu .item[data-tab="new"]').tab('change tab', 'new');
+                
+                // Configurar formulário para edição
+                $('#greenhouse-form').data('edit-id', id);
+                $('#greenhouse-form').off('submit').on('submit', function(e) {
+                    e.preventDefault();
+                    updateGreenhouse(id);
+                });
+            },
+            error: function(error) {
+                console.error('Erro ao carregar estufa para edição:', error);
+                showMessage('Erro ao carregar estufa para edição', 'error');
+            }
+        });
+    }
+    
+    // Função para atualizar estufa
+    function updateGreenhouse(id) {
+        const formData = {};
+        $('#greenhouse-form').serializeArray().forEach(function(item) {
+            formData[item.name] = item.value;
+        });
+        
+        // Converter valores numéricos e booleanos
+        formData.area_m2 = parseFloat(formData.area_m2);
+        formData.temperature_control = $('#greenhouse-form [name="temperature_control"]').is(':checked');
+        formData.humidity_control = $('#greenhouse-form [name="humidity_control"]').is(':checked');
+        formData.irrigation_system = $('#greenhouse-form [name="irrigation_system"]').is(':checked');
+        
+        $.ajax({
+            url: `/api/floriculture/endpoints/greenhouses/${id}`,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(response) {
+                showMessage('Estufa atualizada com sucesso', 'success');
+                $('#greenhouse-form')[0].reset();
+                $('#greenhouse-form').removeData('edit-id');
+                $('#greenhouse-form').off('submit').on('submit', function(e) {
+                    e.preventDefault();
+                    saveGreenhouse();
+                });
+                $('.menu .item[data-tab="list"]').tab('change tab', 'list');
+                loadGreenhouses(1);
+            },
+            error: function(error) {
+                console.error('Erro ao atualizar estufa:', error);
+                showMessage('Erro ao atualizar estufa', 'error');
+            }
+        });
+    }
+    
+    // Função para excluir estufa
+    function deleteGreenhouse(id) {
+        if (confirm('Tem certeza que deseja excluir esta estufa?')) {
+            $.ajax({
+                url: `/api/floriculture/endpoints/greenhouses/${id}`,
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                },
+                success: function(response) {
+                    showMessage('Estufa excluída com sucesso', 'success');
+                    loadGreenhouses(1);
+                },
+                error: function(error) {
+                    console.error('Erro ao excluir estufa:', error);
+                    showMessage('Erro ao excluir estufa', 'error');
+                }
+            });
+        }
+    }
+    
+    // Função para salvar registro de clima
+    function saveClimateRecord() {
+        const formData = {};
+        $('#climate-form').serializeArray().forEach(function(item) {
+            formData[item.name] = item.value;
+        });
+        
+        // Converter valores numéricos
+        formData.greenhouse_id = parseInt(formData.greenhouse_id);
+        formData.temperature = parseFloat(formData.temperature);
+        formData.humidity = parseFloat(formData.humidity);
+        if (formData.light_level) {
+            formData.light_level = parseFloat(formData.light_level);
+        }
+        
+        $.ajax({
+            url: '/api/floriculture/endpoints/climate',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            },
+            success: function(response) {
+                showMessage('Registro de clima salvo com sucesso', 'success');
+                $('#climate-modal').modal('hide');
+                $('#climate-form')[0].reset();
+                
+                // Atualizar lista de registros de clima se a estufa selecionada for a mesma
+                const selectedGreenhouseId = $('#climate-greenhouse-select').val();
+                if (selectedGreenhouseId && parseInt(selectedGreenhouseId) === formData.greenhouse_id) {
+                    loadClimateRecords(formData.greenhouse_id, 1);
+                }
+            },
+            error: function(error) {
+                console.error('Erro ao salvar registro de clima:', error);
+                showMessage('Erro ao salvar registro de clima', 'error');
+            }
+        });
+    }
+    
+    // Função para formatar data
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('pt-BR');
+    }
+    
+    // Função para obter token de autenticação
+    function getToken() {
+        // Em um ambiente real, você obteria o token do localStorage ou sessionStorage
+        return localStorage.getItem('token') || 'dummy_token_for_development';
+    }
+    
+    // Função para exibir mensagem
+    function showMessage(message, type) {
+        const color = type === 'success' ? 'green' : 'red';
+        const icon = type === 'success' ? 'check circle' : 'exclamation triangle';
+        
+        $('body').append(`
+            <div class="ui ${color} message" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                <i class="${icon} icon"></i>
+                <div class="content">
+                    <div class="header">${message}</div>
+                </div>
+            </div>
+        `);
+        
+        setTimeout(function() {
+            $('.ui.message').fadeOut(function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
+</script>
+{% endblock %}

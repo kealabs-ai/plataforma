@@ -50,9 +50,12 @@ from beef_cattle_test import router as beef_cattle_test_router
 from beef_cattle_simple import router as beef_cattle_simple_router
 from beef_cattle_direct import router as beef_cattle_direct_router
 from beef_cattle_mock import router as beef_cattle_mock_router
+# Importar os novos routers simplificados
+from floriculture import router as floriculture_router
+from landscaping import router as landscaping_router
 
 # Importa a instância do banco de dados (certifique-se de que milk_db está acessível)
-from backend.milk_database import milk_db # Importa a instância global
+from database_queries.milk_database_query import * # Importa a instância global
 
 # Inicializa a aplicação FastAPI
 app = FastAPI(
@@ -64,10 +67,11 @@ app = FastAPI(
 # Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todas as origens para desenvolvimento
+    allow_origins=["*", "http://localhost:8501", "http://localhost:8000"],  # Permite todas as origens para desenvolvimento
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Monta arquivos estáticos apenas se os diretórios existirem
@@ -98,6 +102,9 @@ app.include_router(beef_cattle_test_router)
 app.include_router(beef_cattle_simple_router)
 app.include_router(beef_cattle_direct_router)
 app.include_router(beef_cattle_mock_router)
+# Incluir os novos routers sem prefixo adicional, pois já têm seus próprios prefixos
+app.include_router(floriculture_router)
+app.include_router(landscaping_router)
 
 # --- Modelos Pydantic para as Novas Respostas ---
 class MonthlyMilkProductionResponse(BaseModel):
@@ -163,6 +170,11 @@ async def serve_visitor():
         return FileResponse(file_path, media_type="text/html")
     raise HTTPException(status_code=404, detail="File not found")
 
+# Rota de status para verificação de saúde do servidor
+@app.get("/status")
+async def get_status():
+    return {"status": "online", "version": "1.0.0", "message": "API is running correctly"}
+
 # Mantém a rota de token na raiz para compatibilidade
 @app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -220,11 +232,6 @@ async def run_agent(
         return {"result": result, "agent": agent_name}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-# Rota de status
-@app.get("/status")
-async def get_status():
-    return {"status": "online", "version": "1.0.0", "message": "API is running correctly"}
 
 # Direct beef cattle endpoints - usando dados reais do banco de dados
 @app.get("/api/beef_cattle_mock/dashboard/summary")
@@ -449,8 +456,6 @@ async def beef_cattle_weight_gain_paginated(
             "total_items": total_items,
             "total_pages": total_pages
         }
-
-# Endpoints diretos removidos, pois o problema foi corrigido no endpoint original
 
 @app.get("/api/beef_cattle_direct_test")
 async def beef_cattle_direct_test():

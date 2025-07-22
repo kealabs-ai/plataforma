@@ -1,24 +1,32 @@
-from datetime import datetime, timedelta
-from typing import Optional
-from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
+from typing import Optional
+from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
-from .database import get_db
-from .models import TokenData, User
 
 # Carrega variáveis de ambiente
 load_dotenv()
 
 # Configurações de segurança
-SECRET_KEY = os.getenv("APP_SECRET_KEY", "your_app_secret_key")
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Esquema de autenticação OAuth2
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+# Modelo de usuário
+class User(BaseModel):
+    id: int
+    username: str
+    email: str
+    full_name: str
+    role: str
+
+# Função para criar um token de acesso
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
@@ -29,6 +37,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+# Função para obter o usuário atual
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -40,12 +49,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
     
-    db = get_db()
-    user = db.get_user_by_username(username=token_data.username)
-    if user is None:
-        raise credentials_exception
+    # Simulação de usuário para desenvolvimento
+    # Em um ambiente real, você buscaria o usuário no banco de dados
+    user = User(
+        id=1,
+        username=username,
+        email=f"{username}@example.com",
+        full_name="Usuário de Teste",
+        role="admin"
+    )
+    
     return user

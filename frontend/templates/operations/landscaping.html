@@ -1,0 +1,859 @@
+{% extends "base.html" %}
+
+{% block title %}Paisagismo - Kognia Agro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+<style>
+    .ui.statistics .statistic > .value {
+        font-size: 2.5rem !important;
+    }
+    .ui.statistics .statistic > .label {
+        font-size: 1rem !important;
+    }
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .ui.table th {
+        background-color: #f9fafb;
+    }
+    .filter-section {
+        margin-bottom: 20px;
+    }
+    .tab-content {
+        margin-top: 20px;
+    }
+    .project-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+    .project-card {
+        margin-bottom: 1em !important;
+    }
+    .contact-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .status-badge {
+        padding: 5px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+    .status-pending {
+        background-color: #fbbd08;
+        color: #fff;
+    }
+    .status-approved {
+        background-color: #21ba45;
+        color: #fff;
+    }
+    .status-rejected {
+        background-color: #db2828;
+        color: #fff;
+    }
+    .status-completed {
+        background-color: #2185d0;
+        color: #fff;
+    }
+    .kanban-board {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 10px;
+    }
+    .kanban-column {
+        min-width: 250px;
+        width: 250px;
+        margin-right: 15px;
+        background-color: #efefef;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    .kanban-column-header {
+        font-weight: bold;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 10px;
+    }
+    .kanban-card {
+        background-color: white;
+        border-radius: 3px;
+        padding: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .kanban-card.transition {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .kanban-card-project {
+        background-color: white;
+        border-radius: 3px;
+        padding: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .kanban-card-project.transition {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ui container">
+    <h1 class="ui header">
+        <i class="tree icon"></i>
+        <div class="content">
+            Paisagismo
+            <div class="sub header">Gerenciamento de projetos paisagísticos e serviços</div>
+        </div>
+    </h1>
+
+    <div class="ui divider"></div>
+
+    <!-- Dashboard Cards -->
+    <div class="ui four statistics">
+        <div class="statistic">
+            <div class="value" id="active-projects">0</div>
+            <div class="label">Projetos Ativos</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="total-clients">0</div>
+            <div class="label">Clientes</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="monthly-revenue">R$ 0</div>
+            <div class="label">Receita Mensal</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="pending-quotes">0</div>
+            <div class="label">Orçamentos Pendentes</div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Tabs Menu -->
+    <div class="ui top attached tabular menu">
+        <a class="active item" data-tab="projects">Projetos</a>
+        <a class="item" data-tab="maintenance">Manutenção</a>
+        <a class="item" data-tab="contacts">Contatos</a>
+        <a class="item" data-tab="services">Serviços</a>
+        <a class="item" data-tab="quotes">Orçamentos</a>
+    </div>
+
+    <!-- Projects Tab -->
+    <div class="ui bottom attached active tab segment" data-tab="projects">
+        <div class="filter-section">
+            <div class="ui form">
+                <div class="four fields">
+                    <div class="field">
+                        <label>Status</label>
+                        <select class="ui dropdown" id="project-status-filter">
+                            <option value="">Todos</option>
+                            <option value="Planejamento">Planejamento</option>
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Cliente</label>
+                        <select class="ui dropdown" id="project-client-filter">
+                            <option value="">Todos</option>
+                            <!-- Opções serão carregadas via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Data Inicial</label>
+                        <input type="date" id="project-start-date-filter">
+                    </div>
+                    <div class="field">
+                        <label>Data Final</label>
+                        <input type="date" id="project-end-date-filter">
+                    </div>
+                </div>
+                <button class="ui primary button" id="apply-project-filters">Aplicar Filtros</button>
+                <button class="ui button" id="clear-project-filters">Limpar Filtros</button>
+            </div>
+        </div>
+
+        <button class="ui green button" id="add-project-btn">
+            <i class="plus icon"></i> Novo Projeto
+        </button>
+
+        <div class="ui divider"></div>
+
+        <!-- Project Board View -->
+        <h3 class="ui header">Quadro de Projetos</h3>
+        <div class="kanban-board">
+            <div class="kanban-column">
+                <div class="kanban-column-header">Planejamento</div>
+                <div id="planning-column-project">
+                    <!-- Projetos serão carregados via JavaScript -->
+                </div>
+            </div>
+            <div class="kanban-column">
+                <div class="kanban-column-header">Em Andamento</div>
+                <div id="in-progress-column-project">
+                    <!-- Projetos serão carregados via JavaScript -->
+                </div>
+            </div>
+            <div class="kanban-column">
+                <div class="kanban-column-header">Revisão</div>
+                <div id="review-column-project">
+                    <!-- Projetos serão carregados via JavaScript -->
+                </div>
+            </div>
+            <div class="kanban-column">
+                <div class="kanban-column-header">Concluído</div>
+                <div id="completed-column-project">
+                    <!-- Projetos serão carregados via JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="ui divider"></div>
+
+        <!-- Project List View -->
+
+        <div id="projects-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Contacts Tab -->
+    <div class="ui bottom attached tab segment" data-tab="contacts">
+        <button class="ui green button" id="add-contact-btn">
+            <i class="plus icon"></i> Novo Contato
+        </button>
+
+        <div class="ui divider"></div>
+
+        <div class="filter-section">
+            <div class="ui form">
+                <div class="three fields">
+                    <div class="field">
+                        <label>Tipo</label>
+                        <select class="ui dropdown" id="contact-type-filter">
+                            <option value="">Todos</option>
+                            <option value="Cliente">Cliente</option>
+                            <option value="Fornecedor">Fornecedor</option>
+                            <option value="Parceiro">Parceiro</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Status</label>
+                        <select class="ui dropdown" id="contact-status-filter">
+                            <option value="">Todos</option>
+                            <option value="Ativo">Ativo</option>
+                            <option value="Inativo">Inativo</option>
+                            <option value="Potencial">Potencial</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Buscar</label>
+                        <div class="ui icon input">
+                            <input type="text" placeholder="Nome, email, telefone..." id="contact-search">
+                            <i class="search icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Telefone</th>
+                    <th>Endereço</th>
+                    <th>Cidade/Estado</th>
+                    <th>Status</th>
+                    <th>Último Contato</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="contacts-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="contacts-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Maintenance Tab -->
+    <div class="ui bottom attached tab segment" data-tab="maintenance">
+        <button class="ui green button" id="add-maintenance-btn">
+            <i class="plus icon"></i> Nova Manutenção
+        </button>
+
+        <div class="ui divider"></div>
+
+        <div class="filter-section">
+            <div class="ui form">
+                <div class="four fields">
+                    <div class="field">
+                        <label>Cliente</label>
+                        <select class="ui dropdown" id="maintenance-client-filter">
+                            <option value="">Todos</option>
+                            <!-- Opções serão carregadas via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Tipo</label>
+                        <select class="ui dropdown" id="maintenance-type-filter">
+                            <option value="">Todos</option>
+                            <option value="Regular">Regular</option>
+                            <option value="Emergencial">Emergencial</option>
+                            <option value="Sazonal">Sazonal</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Status</label>
+                        <select class="ui dropdown" id="maintenance-status-filter">
+                            <option value="">Todos</option>
+                            <option value="Agendado">Agendado</option>
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Data</label>
+                        <input type="date" id="maintenance-date-filter">
+                    </div>
+                </div>
+                <button class="ui primary button" id="apply-maintenance-filters">Aplicar Filtros</button>
+                <button class="ui button" id="clear-maintenance-filters">Limpar Filtros</button>
+            </div>
+        </div>
+
+        <h3 class="ui header">Quadro de Projetos</h3>
+        <div class="kanban-board">
+            <div class="kanban-column">
+                <div class="kanban-column-header">Planejamento</div>
+                <div id="planning-column">
+                    <!-- Projetos serão carregados via JavaScript -->
+                </div>
+            </div>
+            <div class="kanban-column">
+                <div class="kanban-column-header">Em Andamento</div>
+                <div id="in-progress-column">
+                    <!-- Projetos serão carregados via JavaScript -->
+                </div>
+            </div>
+            <div class="kanban-column">
+                <div class="kanban-column-header">Revisão</div>
+                <div id="review-column">
+                    <!-- Projetos serão carregados via JavaScript -->
+                </div>
+            </div>
+            <div class="kanban-column">
+                <div class="kanban-column-header">Concluído</div>
+                <div id="completed-column">
+                    <!-- Projetos serão carregados via JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="ui divider"></div>
+        <div id="maintenance-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Services Tab -->
+    <div class="ui bottom attached tab segment" data-tab="services">
+        <button class="ui green button" id="add-service-btn">
+            <i class="plus icon"></i> Novo Serviço
+        </button>
+
+        <div class="ui divider"></div>
+
+        <div class="ui stackable cards" id="services-cards">
+            <!-- Serviços serão carregados via JavaScript -->
+        </div>
+
+        <div class="ui divider"></div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome do Serviço</th>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th>Duração Média</th>
+                    <th>Preço Base (R$)</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="services-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="services-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Quotes Tab -->
+    <div class="ui bottom attached tab segment" data-tab="quotes">
+        <button class="ui green button" id="add-quote-btn">
+            <i class="plus icon"></i> Novo Orçamento
+        </button>
+
+        <div class="ui divider"></div>
+
+        <div class="filter-section">
+            <div class="ui form">
+                <div class="four fields">
+                    <div class="field">
+                        <label>Cliente</label>
+                        <select class="ui dropdown" id="quote-client-filter">
+                            <option value="">Todos</option>
+                            <!-- Opções serão carregadas via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Status</label>
+                        <select class="ui dropdown" id="quote-status-filter">
+                            <option value="">Todos</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Aprovado">Aprovado</option>
+                            <option value="Rejeitado">Rejeitado</option>
+                            <option value="Expirado">Expirado</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Data Inicial</label>
+                        <input type="date" id="quote-start-date-filter">
+                    </div>
+                    <div class="field">
+                        <label>Data Final</label>
+                        <input type="date" id="quote-end-date-filter">
+                    </div>
+                </div>
+                <button class="ui primary button" id="apply-quote-filters">Aplicar Filtros</button>
+                <button class="ui button" id="clear-quote-filters">Limpar Filtros</button>
+            </div>
+        </div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Descrição</th>
+                    <th>Data de Criação</th>
+                    <th>Validade</th>
+                    <th>Valor Total (R$)</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="quotes-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="quotes-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Add Project Modal -->
+<div class="ui modal" id="add-project-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Novo Projeto Paisagístico
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-project-form">
+            <div class="two fields">
+                <div class="field">
+                    <label>Nome do Projeto</label>
+                    <input type="text" name="project_name" required>
+                </div>
+                <div class="field">
+                    <label>Cliente</label>
+                    <select class="ui dropdown" name="client_id" required>
+                        <option value="">Selecione</option>
+                        <!-- Opções serão carregadas via JavaScript -->
+                    </select>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Data de Início</label>
+                    <input type="date" name="start_date" required>
+                </div>
+                <div class="field">
+                    <label>Prazo de Conclusão</label>
+                    <input type="date" name="deadline">
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Área (m²)</label>
+                    <input type="number" step="0.01" name="area" required>
+                </div>
+                <div class="field">
+                    <label>Valor do Projeto (R$)</label>
+                    <input type="number" step="0.01" name="value" required>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Status</label>
+                    <select class="ui dropdown" name="status" required>
+                        <option value="">Selecione</option>
+                        <option value="Planejamento">Planejamento</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Revisão">Revisão</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Responsável</label>
+                    <input type="text" name="responsible">
+                </div>
+            </div>
+            <div class="field">
+                <label>Endereço</label>
+                <input type="text" name="address">
+            </div>
+            <div class="field">
+                <label>Descrição</label>
+                <textarea name="description"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-project-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Contact Modal -->
+<div class="ui modal" id="add-contact-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Novo Contato
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-contact-form">
+            <div class="two fields">
+                <div class="field">
+                    <label>Nome</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="field">
+                    <label>Tipo</label>
+                    <select class="ui dropdown" name="type" required>
+                        <option value="">Selecione</option>
+                        <option value="Cliente">Cliente</option>
+                        <option value="Fornecedor">Fornecedor</option>
+                        <option value="Parceiro">Parceiro</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Email</label>
+                    <input type="email" name="email">
+                </div>
+                <div class="field">
+                    <label>Telefone</label>
+                    <input type="tel" name="phone" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>Endereço</label>
+                <input type="text" name="address">
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Status</label>
+                    <select class="ui dropdown" name="status" required>
+                        <option value="">Selecione</option>
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                        <option value="Potencial">Potencial</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Empresa</label>
+                    <input type="text" name="company">
+                </div>
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-contact-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Maintenance Modal -->
+<div class="ui modal" id="add-maintenance-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Nova Manutenção
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-maintenance-form">
+            <div class="two fields">
+                <div class="field">
+                    <label>Cliente</label>
+                    <select class="ui dropdown" name="client_id" required>
+                        <option value="">Selecione</option>
+                        <!-- Opções serão carregadas via JavaScript -->
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Local</label>
+                    <input type="text" name="location" required>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Tipo</label>
+                    <select class="ui dropdown" name="type" required>
+                        <option value="">Selecione</option>
+                        <option value="Regular">Regular</option>
+                        <option value="Emergencial">Emergencial</option>
+                        <option value="Sazonal">Sazonal</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Data Agendada</label>
+                    <input type="date" name="scheduled_date" required>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Equipe</label>
+                    <input type="text" name="team">
+                </div>
+                <div class="field">
+                    <label>Status</label>
+                    <select class="ui dropdown" name="status" required>
+                        <option value="">Selecione</option>
+                        <option value="Agendado">Agendado</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Valor (R$)</label>
+                    <input type="number" step="0.01" name="value" required>
+                </div>
+                <div class="field">
+                    <label>Duração Estimada (horas)</label>
+                    <input type="number" step="0.5" name="estimated_duration">
+                </div>
+            </div>
+            <div class="field">
+                <label>Descrição do Serviço</label>
+                <textarea name="description" required></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-maintenance-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Service Modal -->
+<div class="ui modal" id="add-service-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Novo Serviço
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-service-form">
+            <div class="two fields">
+                <div class="field">
+                    <label>Nome do Serviço</label>
+                    <input type="text" name="service_name" required>
+                </div>
+                <div class="field">
+                    <label>Categoria</label>
+                    <select class="ui dropdown" name="category" required>
+                        <option value="">Selecione</option>
+                        <option value="Projeto">Projeto</option>
+                        <option value="Instalação">Instalação</option>
+                        <option value="Manutenção">Manutenção</option>
+                        <option value="Consultoria">Consultoria</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Preço Base (R$)</label>
+                    <input type="number" step="0.01" name="base_price" required>
+                </div>
+                <div class="field">
+                    <label>Duração Média (horas)</label>
+                    <input type="number" step="0.5" name="average_duration">
+                </div>
+            </div>
+            <div class="field">
+                <label>Status</label>
+                <select class="ui dropdown" name="status" required>
+                    <option value="">Selecione</option>
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Descrição</label>
+                <textarea name="description" required></textarea>
+            </div>
+            <div class="field">
+                <label>Imagem URL</label>
+                <input type="text" name="image_url">
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-service-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Quote Modal -->
+<div class="ui modal" id="add-quote-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Novo Orçamento
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-quote-form">
+            <div class="two fields">
+                <div class="field">
+                    <label>Cliente</label>
+                    <select class="ui dropdown" name="client_id" required>
+                        <option value="">Selecione</option>
+                        <!-- Opções serão carregadas via JavaScript -->
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Data de Validade</label>
+                    <input type="date" name="valid_until" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>Descrição</label>
+                <textarea name="description" required></textarea>
+            </div>
+            
+            <h4 class="ui dividing header">Itens do Orçamento</h4>
+            <div id="quote-items">
+                <div class="quote-item fields">
+                    <div class="six wide field">
+                        <label>Serviço/Item</label>
+                        <div class="ui selection dropdown service-select">
+                            <input type="hidden" name="service_id">
+                            <i class="dropdown icon"></i>
+                            <div class="default text">Selecione</div>
+                            <div class="menu">
+                                <!-- Opções serão carregadas via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="three wide field">
+                        <label>Quantidade</label>
+                        <input type="number" class="quantity-input" value="1" min="1">
+                    </div>
+                    <div class="three wide field">
+                        <label>Preço Unitário (R$)</label>
+                        <input type="number" step="0.01" class="price-input">
+                    </div>
+                    <div class="three wide field">
+                        <label>Subtotal (R$)</label>
+                        <input type="number" step="0.01" class="subtotal-input" readonly>
+                    </div>
+                    <div class="one wide field">
+                        <label>&nbsp;</label>
+                        <button type="button" class="ui icon red button remove-item"><i class="trash icon"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" class="ui button" id="add-quote-item">
+                <i class="plus icon"></i> Adicionar Item
+            </button>
+            
+            <div class="ui divider"></div>
+            
+            <div class="two fields">
+                <div class="field">
+                    <label>Desconto (%)</label>
+                    <input type="number" step="0.01" name="discount" value="0">
+                </div>
+                <div class="field">
+                    <label>Valor Total (R$)</label>
+                    <input type="number" step="0.01" name="total_value" id="quote-total-value" readonly>
+                </div>
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-quote-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landscaping.js') }}"></script>
+{% endblock %}

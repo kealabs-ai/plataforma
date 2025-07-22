@@ -9,3 +9,7 @@ def agricultural_inputs():
 @bp.route('/field_operations')
 def field_operations():
     return render_template('activities_inputs/field_operations.html')
+
+@bp.route('/landscaping_projects')
+def landscaping_projects():
+    return render_template('landscaping/projects.html')

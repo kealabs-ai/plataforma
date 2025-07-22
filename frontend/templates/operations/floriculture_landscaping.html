@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+
+{% block title %}Floricultura - Kognia Agro{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/menu.css') }}">
+<style>
+    .ui.statistics .statistic > .value {
+        font-size: 2.5rem !important;
+    }
+    .ui.statistics .statistic > .label {
+        font-size: 1rem !important;
+    }
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .ui.table th {
+        background-color: #f9fafb;
+    }
+    .filter-section {
+        margin-bottom: 20px;
+    }
+    .tab-content {
+        margin-top: 20px;
+    }
+    .plant-image {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    .plant-card {
+        margin-bottom: 1em !important;
+    }
+    .plant-card .image {
+        height: 200px;
+        overflow: hidden;
+    }
+    .plant-card .image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ui container">
+    <h1 class="ui header">
+        <i class="leaf icon"></i>
+        <div class="content">
+            Floricultura
+            <div class="sub header">Gerenciamento de plantas ornamentais e flores</div>
+        </div>
+    </h1>
+
+    <div class="ui divider"></div>
+
+    <!-- Dashboard Cards -->
+    <div class="ui four statistics">
+        <div class="statistic">
+            <div class="value" id="total-plants">0</div>
+            <div class="label">Total de Plantas</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="flower-varieties">0</div>
+            <div class="label">Variedades</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="monthly-sales">R$ 0</div>
+            <div class="label">Vendas do Mês</div>
+        </div>
+        <div class="statistic">
+            <div class="value" id="area-cultivated">0 m²</div>
+            <div class="label">Área Cultivada</div>
+        </div>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Tabs Menu -->
+    <div class="ui top attached tabular menu">
+        <a class="active item" data-tab="plant-inventory">Inventário de Plantas</a>
+        <a class="item" data-tab="cultivation">Cultivo</a>
+        <a class="item" data-tab="sales">Vendas</a>
+        <a class="item" data-tab="suppliers">Fornecedores</a>
+        <a class="item" data-tab="analytics">Análises</a>
+    </div>
+
+    <!-- Plant Inventory Tab -->
+    <div class="ui bottom attached active tab segment" data-tab="plant-inventory">
+        <div class="filter-section">
+            <div class="ui form">
+                <div class="four fields">
+                    <div class="field">
+                        <label>Categoria</label>
+                        <select class="ui dropdown" id="category-filter">
+                            <option value="">Todas</option>
+                            <option value="Flores">Flores</option>
+                            <option value="Arbustos">Arbustos</option>
+                            <option value="Árvores">Árvores</option>
+                            <option value="Gramados">Gramados</option>
+                            <option value="Suculentas">Suculentas</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Ambiente</label>
+                        <select class="ui dropdown" id="environment-filter">
+                            <option value="">Todos</option>
+                            <option value="Interno">Interno</option>
+                            <option value="Externo">Externo</option>
+                            <option value="Ambos">Ambos</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Necessidade de Sol</label>
+                        <select class="ui dropdown" id="sun-filter">
+                            <option value="">Todas</option>
+                            <option value="Pleno Sol">Pleno Sol</option>
+                            <option value="Meia Sombra">Meia Sombra</option>
+                            <option value="Sombra">Sombra</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Disponibilidade</label>
+                        <select class="ui dropdown" id="availability-filter">
+                            <option value="">Todas</option>
+                            <option value="Em Estoque">Em Estoque</option>
+                            <option value="Esgotado">Esgotado</option>
+                            <option value="Sob Encomenda">Sob Encomenda</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="ui primary button" id="apply-filters">Aplicar Filtros</button>
+                <button class="ui button" id="clear-filters">Limpar Filtros</button>
+            </div>
+        </div>
+
+        <button class="ui green button" id="add-plant-btn">
+            <i class="plus icon"></i> Adicionar Planta
+        </button>
+
+        <div class="ui divider"></div>
+
+        <!-- Grid View / List View Toggle -->
+        <div class="ui right floated buttons">
+            <button class="ui button active" id="grid-view-btn"><i class="grid layout icon"></i> Grade</button>
+            <button class="ui button" id="list-view-btn"><i class="list icon"></i> Lista</button>
+        </div>
+        <div class="ui clearing divider"></div>
+
+        <!-- Grid View -->
+        <div id="grid-view">
+            <div class="ui four cards" id="plants-grid">
+                <!-- Plantas serão carregadas via JavaScript -->
+            </div>
+        </div>
+
+        <!-- List View -->
+        <div id="list-view" style="display: none;">
+            <table class="ui celled table">
+                <thead>
+                    <tr>
+                        <th>Imagem</th>
+                        <th>Nome</th>
+                        <th>Nome Científico</th>
+                        <th>Categoria</th>
+                        <th>Ambiente</th>
+                        <th>Necessidade de Sol</th>
+                        <th>Estoque</th>
+                        <th>Preço (R$)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="plants-table-body">
+                    <!-- Dados serão carregados via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <div id="plants-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Suppliers Tab -->
+    <div class="ui bottom attached tab segment" data-tab="suppliers">
+        <button class="ui green button" id="add-supplier-btn">
+            <i class="plus icon"></i> Novo Fornecedor
+        </button>
+
+        <div class="ui divider"></div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Contato</th>
+                    <th>Telefone</th>
+                    <th>Email</th>
+                    <th>Produtos</th>
+                    <th>Última Compra</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="suppliers-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="suppliers-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Cultivation Tab -->
+    <div class="ui bottom attached tab segment" data-tab="cultivation">
+        <div class="ui form">
+            <div class="fields">
+                <div class="eight wide field">
+                    <label>Selecione a Planta</label>
+                    <select class="ui dropdown" id="cultivation-plant-select">
+                        <option value="">Selecione uma planta</option>
+                        <!-- Opções serão carregadas via JavaScript -->
+                    </select>
+                </div>
+                <div class="eight wide field">
+                    <label>&nbsp;</label>
+                    <button class="ui primary button" id="add-cultivation-btn">
+                        <i class="plus icon"></i> Registrar Cultivo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui divider"></div>
+
+        <div class="ui two column grid">
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="cultivation-chart"></canvas>
+                </div>
+            </div>
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="growth-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Planta</th>
+                    <th>Quantidade</th>
+                    <th>Fase</th>
+                    <th>Localização</th>
+                    <th>Responsável</th>
+                    <th>Observações</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="cultivation-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="cultivation-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Sales Tab -->
+    <div class="ui bottom attached tab segment" data-tab="sales">
+        <button class="ui green button" id="add-sale-btn">
+            <i class="plus icon"></i> Registrar Venda
+        </button>
+
+        <div class="ui divider"></div>
+
+        <div class="ui two column grid">
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="sales-chart"></canvas>
+                </div>
+            </div>
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="sales-by-category-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <table class="ui celled table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Planta/Projeto</th>
+                    <th>Categoria</th>
+                    <th>Quantidade</th>
+                    <th>Preço Unitário (R$)</th>
+                    <th>Valor Total (R$)</th>
+                    <th>Cliente</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="sales-table-body">
+                <!-- Dados serão carregados via JavaScript -->
+            </tbody>
+        </table>
+        <div id="sales-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div class="ui bottom attached tab segment" data-tab="analytics">
+        <div class="ui form">
+            <div class="two fields">
+                <div class="field">
+                    <label>Período</label>
+                    <select class="ui dropdown" id="analytics-period">
+                        <option value="month">Último Mês</option>
+                        <option value="quarter">Último Trimestre</option>
+                        <option value="year">Último Ano</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Categoria</label>
+                    <select class="ui dropdown" id="analytics-category">
+                        <option value="">Todas</option>
+                        <option value="Flores">Flores</option>
+                        <option value="Arbustos">Arbustos</option>
+                        <option value="Árvores">Árvores</option>
+                        <option value="Gramados">Gramados</option>
+                        <option value="Suculentas">Suculentas</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui divider"></div>
+
+        <div class="ui two column grid">
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="revenue-chart"></canvas>
+                </div>
+            </div>
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="top-sellers-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui two column grid">
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="seasonal-trends-chart"></canvas>
+                </div>
+            </div>
+            <div class="column">
+                <div class="chart-container">
+                    <canvas id="project-performance-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Add Plant Modal -->
+<div class="ui modal" id="add-plant-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Adicionar Nova Planta
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-plant-form">
+            <div class="two fields">
+                <div class="field">
+                    <label>Nome</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="field">
+                    <label>Nome Científico</label>
+                    <input type="text" name="scientific_name">
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Categoria</label>
+                    <select class="ui dropdown" name="category" required>
+                        <option value="">Selecione</option>
+                        <option value="Flores">Flores</option>
+                        <option value="Arbustos">Arbustos</option>
+                        <option value="Árvores">Árvores</option>
+                        <option value="Gramados">Gramados</option>
+                        <option value="Suculentas">Suculentas</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Ambiente</label>
+                    <select class="ui dropdown" name="environment" required>
+                        <option value="">Selecione</option>
+                        <option value="Interno">Interno</option>
+                        <option value="Externo">Externo</option>
+                        <option value="Ambos">Ambos</option>
+                    </select>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Necessidade de Sol</label>
+                    <select class="ui dropdown" name="sun_needs" required>
+                        <option value="">Selecione</option>
+                        <option value="Pleno Sol">Pleno Sol</option>
+                        <option value="Meia Sombra">Meia Sombra</option>
+                        <option value="Sombra">Sombra</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Frequência de Rega</label>
+                    <select class="ui dropdown" name="watering" required>
+                        <option value="">Selecione</option>
+                        <option value="Diária">Diária</option>
+                        <option value="2-3 dias">2-3 dias</option>
+                        <option value="Semanal">Semanal</option>
+                        <option value="Quinzenal">Quinzenal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Estoque</label>
+                    <input type="number" name="stock" required>
+                </div>
+                <div class="field">
+                    <label>Preço (R$)</label>
+                    <input type="number" step="0.01" name="price" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>Imagem URL</label>
+                <input type="text" name="image_url">
+            </div>
+            <div class="field">
+                <label>Descrição</label>
+                <textarea name="description"></textarea>
+            </div>
+            <div class="field">
+                <label>Instruções de Cuidado</label>
+                <textarea name="care_instructions"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-plant-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Project Modal -->
+<div class="ui modal" id="add-project-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Novo Projeto Paisagístico
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-project-form">
+            <div class="two fields">
+                <div class="field">
+                    <label>Nome do Projeto</label>
+                    <input type="text" name="project_name" required>
+                </div>
+                <div class="field">
+                    <label>Cliente</label>
+                    <input type="text" name="client" required>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Data de Início</label>
+                    <input type="date" name="start_date" required>
+                </div>
+                <div class="field">
+                    <label>Prazo de Conclusão</label>
+                    <input type="date" name="deadline">
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Área (m²)</label>
+                    <input type="number" step="0.01" name="area" required>
+                </div>
+                <div class="field">
+                    <label>Valor do Projeto (R$)</label>
+                    <input type="number" step="0.01" name="value" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>Status</label>
+                <select class="ui dropdown" name="status" required>
+                    <option value="">Selecione</option>
+                    <option value="Planejamento">Planejamento</option>
+                    <option value="Em Andamento">Em Andamento</option>
+                    <option value="Concluído">Concluído</option>
+                    <option value="Cancelado">Cancelado</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Endereço</label>
+                <input type="text" name="address">
+            </div>
+            <div class="field">
+                <label>Descrição</label>
+                <textarea name="description"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-project-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Cultivation Record Modal -->
+<div class="ui modal" id="add-cultivation-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Registrar Cultivo
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-cultivation-form">
+            <input type="hidden" name="plant_id" id="cultivation-plant-id">
+            <div class="two fields">
+                <div class="field">
+                    <label>Data</label>
+                    <input type="date" name="cultivation_date" required>
+                </div>
+                <div class="field">
+                    <label>Quantidade</label>
+                    <input type="number" name="quantity" required>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Fase</label>
+                    <select class="ui dropdown" name="phase" required>
+                        <option value="">Selecione</option>
+                        <option value="Semeadura">Semeadura</option>
+                        <option value="Germinação">Germinação</option>
+                        <option value="Crescimento">Crescimento</option>
+                        <option value="Floração">Floração</option>
+                        <option value="Colheita">Colheita</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Localização</label>
+                    <input type="text" name="location" required>
+                </div>
+            </div>
+            <div class="field">
+                <label>Responsável</label>
+                <input type="text" name="responsible">
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-cultivation-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Add Sale Modal -->
+<div class="ui modal" id="add-sale-modal">
+    <i class="close icon"></i>
+    <div class="header">
+        Registrar Venda
+    </div>
+    <div class="content">
+        <form class="ui form" id="add-sale-form">
+            <div class="field">
+                <label>Tipo</label>
+                <select class="ui dropdown" name="sale_type" id="sale-type-select" required>
+                    <option value="">Selecione</option>
+                    <option value="Planta">Planta</option>
+                    <option value="Projeto">Projeto</option>
+                </select>
+            </div>
+            <div class="field" id="plant-select-field">
+                <label>Planta</label>
+                <select class="ui dropdown" name="plant_id" id="sale-plant-select">
+                    <option value="">Selecione uma planta</option>
+                    <!-- Opções serão carregadas via JavaScript -->
+                </select>
+            </div>
+            <div class="field" id="project-select-field" style="display: none;">
+                <label>Projeto</label>
+                <select class="ui dropdown" name="project_id" id="sale-project-select">
+                    <option value="">Selecione um projeto</option>
+                    <!-- Opções serão carregadas via JavaScript -->
+                </select>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Data da Venda</label>
+                    <input type="date" name="sale_date" required>
+                </div>
+                <div class="field" id="quantity-field">
+                    <label>Quantidade</label>
+                    <input type="number" name="quantity" value="1" required>
+                </div>
+            </div>
+            <div class="two fields">
+                <div class="field">
+                    <label>Preço Unitário (R$)</label>
+                    <input type="number" step="0.01" name="unit_price" id="unit-price" required>
+                </div>
+                <div class="field">
+                    <label>Valor Total (R$)</label>
+                    <input type="number" step="0.01" name="total_value" id="total-value" readonly>
+                </div>
+            </div>
+            <div class="field">
+                <label>Cliente</label>
+                <input type="text" name="customer">
+            </div>
+            <div class="field">
+                <label>Observações</label>
+                <textarea name="notes"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            Cancelar
+        </div>
+        <div class="ui positive right labeled icon button" id="save-sale-btn">
+            Salvar
+            <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
+<script src="{{ url_for('static', filename='js/floriculture_landscaping.js') }}"></script>
+{% endblock %}

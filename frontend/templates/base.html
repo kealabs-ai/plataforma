@@ -72,6 +72,9 @@
                     <a class="item {% if active_submenu == 'field_operations' %}active{% endif %}" href="{{ url_for('activities_inputs.field_operations') }}">
                         <i class="tasks icon"></i> Atividades Operacionais
                     </a>
+                    <a class="item {% if active_submenu == 'landscaping_projects' %}active{% endif %}" href="{{ url_for('activities_inputs.landscaping_projects') }}">
+                        <i class="tree icon"></i> Projetos Paisagísticos
+                    </a>
                 </div>
             </div>
             
@@ -94,6 +97,12 @@
                     </a>
                     <a class="item {% if active_submenu == 'beef_cattle' %}active{% endif %}" href="{{ url_for('operations.beef_cattle') }}">
                         <i class="paw icon"></i> Boi Gordo
+                    </a>
+                    <a class="item {% if active_submenu == 'floriculture' %}active{% endif %}" href="{{ url_for('operations.floriculture') }}">
+                        <i class="leaf icon"></i> Floricultura
+                    </a>
+                    <a class="item {% if active_submenu == 'landscaping' %}active{% endif %}" href="{{ url_for('operations.landscaping') }}">
+                        <i class="tree icon"></i> Paisagismo
                     </a>
                 </div>
             </div>

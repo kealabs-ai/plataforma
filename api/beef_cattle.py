@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, Path, Body, Depends
 from typing import List, Dict, Any, Optional
 from datetime import date, datetime
 from pydantic import BaseModel, validator, Field
-from backend.beef_cattle_database import beef_cattle_db
+from database_queries.beef_cattle_database_query import beef_cattle_db
 
 router = APIRouter(
     prefix="/api/beef_cattle",

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Projetos de Paisagismo{% endblock %}
+
+{% block content %}
+<div class="ui container">
+    <h1 class="ui header">Projetos de Paisagismo</h1>
+    
+    <div class="ui grid">
+        <div class="sixteen wide column">
+            <div class="ui segment">
+                <div class="ui top attached tabular menu">
+                    <a class="active item" data-tab="list">Lista de Projetos</a>
+                    <a class="item" data-tab="new">Novo Projeto</a>
+                    <a class="item" data-tab="dashboard">Dashboard</a>
+                </div>
+                
+                <!-- Lista de Projetos -->
+                <div class="ui bottom attached active tab segment" data-tab="list">
+                    <div class="ui form">
+                        <div class="fields">
+                            <div class="five wide field">
+                                <label>Tipo de Projeto</label>
+                                <select class="ui mini fluid selection dropdown" id="filter-project-type">
+                                    <option value="">Todos</option>
+                                    <option value="Residencial">Residencial</option>
+                                    <option value="Comercial">Comercial</option>
+                                    <option value="Público">Público</option>
+                                </select>
+                            </div>
+                            <div class="five wide field">
+                                <label>Status</label>
+                                <select class="ui dropdown" id="filter-status">
+                                    <option value="">Todos</option>
+                                    <option value="Em Andamento">Em Andamento</option>
+                                    <option value="Concluído">Concluído</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                </select>
+                            </div>
+                            <div class="five wide field">
+                                <label>Cliente</label>
+                                <input type="text" id="filter-client" placeholder="Nome do cliente">
+                            </div>
+                            <div class="one wide field">
+                                <label>&nbsp;</label>
+                                <button class="ui primary button" id="btn-filter">Filtrar</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <table class="ui celled table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Cliente</th>
+                                <th>Tipo</th>
+                                <th>Área (m²)</th>
+                                <th>Data de Início</th>
+                                <th>Orçamento</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-table-body">
+                            <!-- Dados serão carregados via JavaScript -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="ui pagination menu" id="pagination">
+                        <!-- Paginação será gerada via JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Novo Projeto -->
+                <div class="ui bottom attached tab segment" data-tab="new">
+                    <form class="ui form" id="project-form">
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Nome do Projeto</label>
+                                <input type="text" name="name" placeholder="Nome do projeto" required>
+                            </div>
+                            <div class="field">
+                                <label>Cliente</label>
+                                <input type="text" name="client_name" placeholder="Nome do cliente" required>
+                            </div>
+                        </div>
+                        <div class="three fields">
+                            <div class="field">
+                                <label>Tipo de Projeto</label>
+                                <select class="ui dropdown" name="project_type" required>
+                                    <option value="">Selecione o tipo</option>
+                                    <option value="Residencial">Residencial</option>
+                                    <option value="Comercial">Comercial</option>
+                                    <option value="Público">Público</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Área (m²)</label>
+                                <input type="number" step="0.01" name="area_m2" placeholder="Área em m²" required>
+                            </div>
+                            <div class="field">
+                                <label>Orçamento (R$)</label>
+                                <input type="number" step="0.01" name="budget" placeholder="Orçamento" required>
+                            </div>
+                        </div>
+                        <div class="three fields">
+                            <div class="field">
+                                <label>Data de Início</label>
+                                <input type="date" name="start_date" required>
+                            </div>
+                            <div class="field">
+                                <label>Data Prevista de Término</label>
+                                <input type="date" name="expected_end_date">
+                            </div>
+                            <div class="field">
+                                <label>Status</label>
+                                <select class="ui dropdown" name="status">
+                                    <option value="Em Andamento">Em Andamento</option>
+                                    <option value="Concluído">Concluído</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Endereço</label>
+                            <input type="text" name="address" placeholder="Endereço do projeto">
+                        </div>
+                        <div class="field">
+                            <label>Descrição</label>
+                            <textarea name="description" rows="3" placeholder="Descrição do projeto"></textarea>
+                        </div>
+                        <button class="ui primary button" type="submit">Salvar</button>
+                        <button class="ui button" type="reset">Limpar</button>
+                    </form>
+                </div>
+                
+                <!-- Dashboard -->
+                <div class="ui bottom attached tab segment" data-tab="dashboard">
+                    <div class="ui grid">
+                        <div class="four wide column">
+                            <div class="ui statistic">
+                                <div class="value" id="total-projects">0</div>
+                                <div class="label">Total de Projetos</div>
+                            </div>
+                        </div>
+                        <div class="four wide column">
+                            <div class="ui statistic">
+                                <div class="value" id="active-projects">0</div>
+                                <div class="label">Projetos Ativos</div>
+                            </div>
+                        </div>
+                        <div class="four wide column">
+                            <div class="ui statistic">
+                                <div class="value" id="completed-projects">0</div>
+                                <div class="label">Projetos Concluídos</div>
+                            </div>
+                        </div>
+                        <div class="four wide column">
+                            <div class="ui statistic">
+                                <div class="value" id="budget-percentage">0%</div>
+                                <div class="label">Orçamento Executado</div>
+                            </div>
+                        </div>
+                        
+                        <div class="eight wide column">
+                            <div class="ui segment">
+                                <h3 class="ui header">Projetos por Tipo</h3>
+                                <canvas id="chart-project-types"></canvas>
+                            </div>
+                        </div>
+                        <div class="eight wide column">
+                            <div class="ui segment">
+                                <h3 class="ui header">Tarefas por Status</h3>
+                                <canvas id="chart-task-status"></canvas>
+                            </div>
+                        </div>
+                        <div class="sixteen wide column">
+                            <div class="ui segment">
+                                <h3 class="ui header">Despesas por Categoria</h3>
+                                <canvas id="chart-expenses"></canvas>
+                            </div>
+                        </div>
+                        <div class="sixteen wide column">
+                            <div class="ui segment">
+                                <h3 class="ui header">Progresso Mensal</h3>
+                                <canvas id="chart-monthly-progress"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/landscaping.js"></script>

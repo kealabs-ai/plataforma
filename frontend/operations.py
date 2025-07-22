@@ -9,3 +9,11 @@ def milk_production():
 @bp.route('/beef_cattle')
 def beef_cattle():
     return render_template('operations/beef_cattle.html')
+
+@bp.route('/floriculture')
+def floriculture():
+    return render_template('operations/floriculture.html')
+
+@bp.route('/landscaping')
+def landscaping():
+    return render_template('operations/landscaping.html')

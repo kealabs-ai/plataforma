@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, Body
 from typing import List, Dict, Any, Optional
 from datetime import date
 from pydantic import BaseModel
-from backend.milk_database_query import milk_db_query
-from backend.milk_database_query_animal import milk_db_query_animal
+from database_queries.milk_database_query import milk_db_query
+from database_queries.milk_database_query_animal import milk_db_query_animal
 
 router = APIRouter(
     prefix="/api/milk",
