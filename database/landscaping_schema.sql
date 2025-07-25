@@ -17,6 +17,8 @@
 CREATE TABLE IF NOT EXISTS landscaping_crm_clients (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL, -- Assuming a user manages clients
+    id_whatsapp VARCHAR(255),
+    img_profile VARCHAR(255),
     client_name VARCHAR(255) NOT NULL,
     contact_person VARCHAR(255),
     email VARCHAR(255) UNIQUE,

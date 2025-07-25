@@ -590,14 +590,8 @@
                     <input type="text" name="name" required>
                 </div>
                 <div class="field">
-                    <label>Tipo</label>
-                    <select class="ui dropdown" name="type" required>
-                        <option value="">Selecione</option>
-                        <option value="Cliente">Cliente</option>
-                        <option value="Fornecedor">Fornecedor</option>
-                        <option value="Parceiro">Parceiro</option>
-                        <option value="Outro">Outro</option>
-                    </select>
+                    <label>Pessoa de Contato</label>
+                    <input type="text" name="contact_person">
                 </div>
             </div>
             <div class="two fields">
@@ -614,19 +608,45 @@
                 <label>Endereço</label>
                 <input type="text" name="address">
             </div>
-            <div class="two fields">
+            <div class="three fields">
+                <div class="field">
+                    <label>Cidade</label>
+                    <input type="text" name="city">
+                </div>
+                <div class="field">
+                    <label>Estado</label>
+                    <input type="text" name="state">
+                </div>
+                <div class="field">
+                    <label>CEP</label>
+                    <input type="text" name="zip_code">
+                </div>
+            </div>
+            <div class="three fields">
+                <div class="field">
+                    <label>Tipo</label>
+                    <select class="ui dropdown" name="type">
+                        <option value="">Selecione</option>
+                        <option value="Residencial">Residencial</option>
+                        <option value="Comercial">Comercial</option>
+                        <option value="Público">Público</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Setor</label>
+                    <input type="text" name="industry">
+                </div>
                 <div class="field">
                     <label>Status</label>
                     <select class="ui dropdown" name="status" required>
                         <option value="">Selecione</option>
+                        <option value="Lead">Lead</option>
+                        <option value="Qualificado">Qualificado</option>
                         <option value="Ativo">Ativo</option>
                         <option value="Inativo">Inativo</option>
-                        <option value="Potencial">Potencial</option>
+                        <option value="Perdido">Perdido</option>
                     </select>
-                </div>
-                <div class="field">
-                    <label>Empresa</label>
-                    <input type="text" name="company">
                 </div>
             </div>
             <div class="field">

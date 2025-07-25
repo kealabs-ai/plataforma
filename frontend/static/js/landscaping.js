@@ -1279,11 +1279,183 @@ function formatDate(dateString) {
     
     // Funções para visualizar, editar e excluir clientes
     function viewClient(id) {
-        alert('Visualizar cliente ' + id + ' (implementação pendente)');
+        $.ajax({
+            url: `${API_URL}/api/landscaping/client/${id}`,
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+            },
+            success: function(client) {
+                // Criar modal de visualização
+                $('body').append(`
+                    <div class="ui modal" id="view-client-modal">
+                        <i class="close icon"></i>
+                        <div class="header">
+                            ${client.client_name}
+                        </div>
+                        <div class="content">
+                            <div class="ui form">
+                                <div class="two fields">
+                                    <div class="field">
+                                        <label>Nome</label>
+                                        <p>${client.client_name}</p>
+                                    </div>
+                                    <div class="field">
+                                        <label>Pessoa de Contato</label>
+                                        <p>${client.contact_person || '-'}</p>
+                                    </div>
+                                </div>
+                                <div class="two fields">
+                                    <div class="field">
+                                        <label>Email</label>
+                                        <p>${client.email || '-'}</p>
+                                    </div>
+                                    <div class="field">
+                                        <label>Telefone</label>
+                                        <p>${client.phone_number || '-'}</p>
+                                    </div>
+                                </div>
+                                <div class="two fields">
+                                    <div class="field">
+                                        <label>Endereço</label>
+                                        <p>${client.address || '-'}</p>
+                                    </div>
+                                    <div class="field">
+                                        <label>Cidade/Estado</label>
+                                        <p>${client.city && client.state ? client.city + ' - ' + client.state : (client.city || client.state || '-')}</p>
+                                    </div>
+                                </div>
+                                <div class="two fields">
+                                    <div class="field">
+                                        <label>Tipo</label>
+                                        <p>${client.client_type || '-'}</p>
+                                    </div>
+                                    <div class="field">
+                                        <label>Setor</label>
+                                        <p>${client.industry || '-'}</p>
+                                    </div>
+                                </div>
+                                <div class="two fields">
+                                    <div class="field">
+                                        <label>Status</label>
+                                        <p>${client.status}</p>
+                                    </div>
+                                    <div class="field">
+                                        <label>CEP</label>
+                                        <p>${client.zip_code || '-'}</p>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label>Observações</label>
+                                    <p>${client.notes || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <div class="ui button" onclick="$('#view-client-modal').modal('hide')">
+                                Fechar
+                            </div>
+                        </div>
+                    </div>
+                `);
+                
+                $('#view-client-modal').modal('show');
+            },
+            error: function(error) {
+                console.error('Erro ao obter detalhes do cliente:', error);
+                alert('Erro ao obter detalhes do cliente');
+            }
+        });
     }
     
     function editClient(id) {
-        alert('Editar cliente ' + id + ' (implementação pendente)');
+        $.ajax({
+            url: `${API_URL}/api/landscaping/client/${id}`,
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+            },
+            success: function(client) {
+                // Preencher o formulário com os dados do cliente
+                $('#add-contact-form [name="name"]').val(client.client_name);
+                $('#add-contact-form [name="contact_person"]').val(client.contact_person || '');
+                $('#add-contact-form [name="email"]').val(client.email || '');
+                $('#add-contact-form [name="phone"]').val(client.phone_number || '');
+                $('#add-contact-form [name="address"]').val(client.address || '');
+                $('#add-contact-form [name="city"]').val(client.city || '');
+                $('#add-contact-form [name="state"]').val(client.state || '');
+                $('#add-contact-form [name="zip_code"]').val(client.zip_code || '');
+                $('#add-contact-form [name="type"]').val(client.client_type || '').trigger('change');
+                $('#add-contact-form [name="industry"]').val(client.industry || '');
+                $('#add-contact-form [name="status"]').val(client.status).trigger('change');
+                $('#add-contact-form [name="notes"]').val(client.notes || '');
+                
+                // Atualizar os dropdowns
+                $('.ui.dropdown').dropdown('refresh');
+                
+                // Alterar o título do modal
+                $('#add-contact-modal .header').text('Editar Contato');
+                
+                // Alterar o comportamento do botão de salvar
+                $('#save-contact-btn').off('click').on('click', function() {
+                    updateClient(id);
+                });
+                
+                // Mostrar o modal
+                $('#add-contact-modal').modal('show');
+            },
+            error: function(error) {
+                console.error('Erro ao obter detalhes do cliente:', error);
+                alert('Erro ao obter detalhes do cliente');
+            }
+        });
+    }
+    
+    function updateClient(id) {
+        const formData = {};
+        $('#add-contact-form').serializeArray().forEach(function(item) {
+            formData[item.name] = item.value;
+        });
+        
+        // Mapear campos do formulário para os campos da API
+        const clientData = {
+            client_name: formData.name,
+            contact_person: formData.contact_person,
+            email: formData.email,
+            phone_number: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zip_code,
+            client_type: formData.type,
+            industry: formData.industry,
+            status: formData.status,
+            notes: formData.notes
+        };
+        
+        $.ajax({
+            url: `${API_URL}/api/landscaping/client/${id}?user_id=1`, // Usando user_id fixo para teste
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(clientData),
+            headers: {
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+            },
+            success: function(response) {
+                alert('Cliente atualizado com sucesso!');
+                $('#add-contact-modal').modal('hide');
+                $('#add-contact-form')[0].reset();
+                $('#add-contact-modal .header').text('Novo Contato');
+                $('#save-contact-btn').off('click').on('click', function() {
+                    saveClient();
+                });
+                loadClients();
+            },
+            error: function(error) {
+                console.error('Erro ao atualizar cliente:', error);
+                alert('Erro ao atualizar cliente');
+            }
+        });
     }
     
     function deleteClient(id) {
@@ -1304,6 +1476,50 @@ function formatDate(dateString) {
                 }
             });
         }
+    }
+    
+    function saveClient() {
+        const formData = {};
+        $('#add-contact-form').serializeArray().forEach(function(item) {
+            formData[item.name] = item.value;
+        });
+        
+        // Mapear campos do formulário para os campos da API
+        const clientData = {
+            user_id: 1, // Usando user_id fixo para teste
+            client_name: formData.name,
+            contact_person: formData.contact_person,
+            email: formData.email,
+            phone_number: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip_code: formData.zip_code,
+            client_type: formData.type,
+            industry: formData.industry,
+            status: formData.status,
+            notes: formData.notes
+        };
+        
+        $.ajax({
+            url: `${API_URL}/api/landscaping/client`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(clientData),
+            headers: {
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+            },
+            success: function(response) {
+                alert('Cliente criado com sucesso!');
+                $('#add-contact-modal').modal('hide');
+                $('#add-contact-form')[0].reset();
+                loadClients();
+            },
+            error: function(error) {
+                console.error('Erro ao criar cliente:', error);
+                alert('Erro ao criar cliente');
+            }
+        });
     }
      // Carregar dados dos orçamentos quando a aba de orçamentos for selecionada
     $('.menu .item[data-tab="quotes"]').on('click', function() {
@@ -2521,6 +2737,11 @@ function formatDate(dateString) {
         
         return date.toLocaleDateString('pt-BR');
     }
+    
+    // Configurar o botão de salvar contato
+    $('#save-contact-btn').on('click', function() {
+        saveClient();
+    });
     
     // Inicializar a página
     $(document).ready(function() {

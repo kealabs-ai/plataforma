@@ -244,6 +244,189 @@ class LandscapingDatabase:
         finally:
             cursor.close()
     
+    # ===== Operações CRUD para Clientes CRM =====
+    
+    def create_client(self, user_id, client_name, contact_person=None, email=None, phone_number=None, 
+                     address=None, city=None, state=None, zip_code=None, client_type=None, 
+                     industry=None, status="Lead", last_interaction_date=None, next_follow_up_date=None, notes=None):
+        """Cria um novo cliente CRM"""
+        self.ensure_connection()
+        cursor = self.connection.cursor()
+        
+        query = """
+        INSERT INTO landscaping_crm_clients 
+        (user_id, client_name, contact_person, email, phone_number, address, city, state, zip_code, 
+         client_type, industry, status, last_interaction_date, next_follow_up_date, notes)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        try:
+            cursor.execute(query, (user_id, client_name, contact_person, email, phone_number, address, 
+                                  city, state, zip_code, client_type, industry, status, 
+                                  last_interaction_date, next_follow_up_date, notes))
+            self.connection.commit()
+            client_id = cursor.lastrowid
+            return self.get_client(client_id)
+        except Error as e:
+            print(f"Erro ao criar cliente: {e}")
+            return None
+        finally:
+            cursor.close()
+    
+    def get_client(self, client_id):
+        """Obtém um cliente pelo ID"""
+        self.ensure_connection()
+        cursor = self.connection.cursor(dictionary=True)
+        
+        query = "SELECT * FROM landscaping_crm_clients WHERE id = %s"
+        
+        try:
+            cursor.execute(query, (client_id,))
+            client = cursor.fetchone()
+            return client
+        except Error as e:
+            print(f"Erro ao obter cliente: {e}")
+            return None
+        finally:
+            cursor.close()
+    
+    def get_all_clients(self, filters=None, page=1, page_size=10):
+        """Obtém todos os clientes com filtros e paginação"""
+        self.ensure_connection()
+        cursor = self.connection.cursor(dictionary=True)
+        
+        query = "SELECT * FROM landscaping_crm_clients WHERE 1=1"
+        params = []
+        
+        if filters:
+            if 'user_id' in filters and filters['user_id']:
+                query += " AND user_id = %s"
+                params.append(filters['user_id'])
+            
+            if 'status' in filters and filters['status']:
+                query += " AND status = %s"
+                params.append(filters['status'])
+            
+            if 'client_name' in filters and filters['client_name']:
+                query += " AND client_name LIKE %s"
+                params.append(f"%{filters['client_name']}%")
+            
+            if 'industry' in filters and filters['industry']:
+                query += " AND industry = %s"
+                params.append(filters['industry'])
+        
+        query += " ORDER BY client_name ASC"
+        query += " LIMIT %s OFFSET %s"
+        
+        offset = (page - 1) * page_size
+        params.extend([page_size, offset])
+        
+        try:
+            cursor.execute(query, params)
+            clients = cursor.fetchall()
+            return clients
+        except Error as e:
+            print(f"Erro ao obter clientes: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def count_clients(self, filters=None):
+        """Conta o número total de clientes com filtros"""
+        self.ensure_connection()
+        cursor = self.connection.cursor()
+        
+        query = "SELECT COUNT(*) FROM landscaping_crm_clients WHERE 1=1"
+        params = []
+        
+        if filters:
+            if 'user_id' in filters and filters['user_id']:
+                query += " AND user_id = %s"
+                params.append(filters['user_id'])
+            
+            if 'status' in filters and filters['status']:
+                query += " AND status = %s"
+                params.append(filters['status'])
+            
+            if 'client_name' in filters and filters['client_name']:
+                query += " AND client_name LIKE %s"
+                params.append(f"%{filters['client_name']}%")
+            
+            if 'industry' in filters and filters['industry']:
+                query += " AND industry = %s"
+                params.append(filters['industry'])
+        
+        try:
+            cursor.execute(query, params)
+            count = cursor.fetchone()[0]
+            return count
+        except Error as e:
+            print(f"Erro ao contar clientes: {e}")
+            return 0
+        finally:
+            cursor.close()
+    
+    def update_client(self, client_id, user_id, update_data):
+        """Atualiza um cliente"""
+        self.ensure_connection()
+        cursor = self.connection.cursor()
+        
+        # Verificar se o cliente existe e pertence ao usuário
+        client = self.get_client(client_id)
+        if not client or client['user_id'] != user_id:
+            return None
+        
+        # Construir a consulta de atualização
+        query = "UPDATE landscaping_crm_clients SET "
+        params = []
+        
+        update_fields = []
+        for key, value in update_data.items():
+            if key in ['client_name', 'contact_person', 'email', 'phone_number', 'address', 
+                      'city', 'state', 'zip_code', 'client_type', 'industry', 'status', 
+                      'last_interaction_date', 'next_follow_up_date', 'notes']:
+                update_fields.append(f"{key} = %s")
+                params.append(value)
+        
+        if not update_fields:
+            return client
+        
+        query += ", ".join(update_fields)
+        query += ", updated_at = NOW() WHERE id = %s"
+        params.append(client_id)
+        
+        try:
+            cursor.execute(query, params)
+            self.connection.commit()
+            return self.get_client(client_id)
+        except Error as e:
+            print(f"Erro ao atualizar cliente: {e}")
+            return None
+        finally:
+            cursor.close()
+    
+    def delete_client(self, client_id, user_id):
+        """Exclui um cliente"""
+        self.ensure_connection()
+        cursor = self.connection.cursor()
+        
+        # Verificar se o cliente existe e pertence ao usuário
+        client = self.get_client(client_id)
+        if not client or client['user_id'] != user_id:
+            return False
+        
+        query = "DELETE FROM landscaping_crm_clients WHERE id = %s"
+        
+        try:
+            cursor.execute(query, (client_id,))
+            self.connection.commit()
+            return True
+        except Error as e:
+            print(f"Erro ao excluir cliente: {e}")
+            return False
+        finally:
+            cursor.close()
+    
     def get_task(self, task_id):
         """Obtém uma tarefa pelo ID"""
         self.ensure_connection()
