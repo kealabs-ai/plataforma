@@ -105,6 +105,35 @@
     .kanban-card-project.transition {
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
+    
+    /* Estilos para a tabela de itens do orçamento */
+    .add-row-button-in-table {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+        background-color: #2185d0;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 5px;
+    }
+    .add-row-button-in-table:hover {
+        transform: scale(1.05);
+        background-color: #1678c2;
+    }
+    .ui.input input {
+        border-radius: 5px !important;
+        border: 1px solid #d4d4d5 !important;
+        padding: 8px 12px !important;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .remove-item {
+        border-radius: 5px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: background-color 0.2s ease-in-out;
+    }
+    .remove-item:hover {
+        background-color: #db2828 !important;
+        color: white !important;
+    }
 </style>
 {% endblock %}
 
@@ -787,41 +816,31 @@
             </div>
             
             <h4 class="ui dividing header">Itens do Orçamento</h4>
-            <div id="quote-items">
-                <div class="quote-item fields">
-                    <div class="six wide field">
-                        <label>Serviço/Item</label>
-                        <div class="ui selection dropdown service-select">
-                            <input type="hidden" name="service_id">
-                            <i class="dropdown icon"></i>
-                            <div class="default text">Selecione</div>
-                            <div class="menu">
-                                <!-- Opções serão carregadas via JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-                    <div class="three wide field">
-                        <label>Quantidade</label>
-                        <input type="number" class="quantity-input" value="1" min="1">
-                    </div>
-                    <div class="three wide field">
-                        <label>Preço Unitário (R$)</label>
-                        <input type="number" step="0.01" class="price-input">
-                    </div>
-                    <div class="three wide field">
-                        <label>Subtotal (R$)</label>
-                        <input type="number" step="0.01" class="subtotal-input" readonly>
-                    </div>
-                    <div class="one wide field">
-                        <label>&nbsp;</label>
-                        <button type="button" class="ui icon red button remove-item"><i class="trash icon"></i></button>
-                    </div>
-                </div>
-            </div>
-            
-            <button type="button" class="ui button" id="add-quote-item">
-                <i class="plus icon"></i> Adicionar Item
-            </button>
+            <table class="ui celled table">
+                <thead>
+                    <tr>
+                        <th>Serviço/Item</th>
+                        <th>Quantidade</th>
+                        <th>Preço Unitário (R$)</th>
+                        <th>Subtotal (R$)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Linhas serão adicionadas via JavaScript -->
+                </tbody>
+                <tfoot class="full-width">
+                    <tr>
+                        <th colspan="3" style="text-align: right;">Total Geral:</th>
+                        <th><div class="ui input"><input type="number" step="0.01" id="grandTotal" readonly value="0.00"></div></th>
+                        <th>
+                            <button type="button" class="ui primary labeled icon button add-row-button-in-table" id="add-quote-item">
+                                <i class="plus icon"></i> Item
+                            </button>
+                        </th>
+                    </tr>
+                </tfoot>
+            </table>
             
             <div class="ui divider"></div>
             

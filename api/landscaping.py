@@ -824,6 +824,43 @@ async def get_quote_endpoint(quote_id: int = Path(..., description="ID do orçam
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao obter orçamento: {str(e)}")
 
+@router.put("/quote/{quote_id}", response_model=QuoteResponse)
+async def update_quote_endpoint(
+    quote_id: int = Path(..., description="ID do orçamento"),
+    user_id: int = Query(..., description="ID do usuário"),
+    quote_data: dict = Body(...)
+):
+    """
+    Atualiza um orçamento de paisagismo.
+    """
+    try:
+        # Verificar se o user_id no query param corresponde ao user_id no corpo
+        if "user_id" in quote_data and quote_data["user_id"] != user_id:
+            raise HTTPException(status_code=400, detail="ID do usuário no corpo da requisição não corresponde ao ID do usuário na query")
+        
+        # Garantir que o user_id esteja no quote_data
+        if "user_id" not in quote_data:
+            quote_data["user_id"] = user_id
+        
+        result = update_quote(quote_id, user_id, quote_data)
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Orçamento com ID {quote_id} não encontrado ou não pertence ao usuário")
+        
+        # Ensure datetime fields are strings
+        if "created_at" in result and not isinstance(result["created_at"], str):
+            if isinstance(result["created_at"], datetime):
+                result["created_at"] = result["created_at"].isoformat()
+                
+        if "valid_until" in result and not isinstance(result["valid_until"], str):
+            if isinstance(result["valid_until"], date):
+                result["valid_until"] = result["valid_until"].isoformat()
+                
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar orçamento: {str(e)}")
+
 # --- MAINTENANCE ENDPOINTS ---
 
 @router.post("/maintenance", response_model=MaintenanceResponse)

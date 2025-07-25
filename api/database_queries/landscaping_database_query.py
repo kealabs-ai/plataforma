@@ -383,6 +383,84 @@ def count_suppliers(filters: Dict[str, Any]) -> int:
         cursor.close()
         conn.close()
 
+def update_quote(quote_id: int, user_id: int, quote_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """
+    Atualiza um orçamento de paisagismo e seus itens.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Verificar se o orçamento existe
+        check_query = "SELECT id FROM landscaping_quotes WHERE id = %s"
+        cursor.execute(check_query, (quote_id,))
+        if not cursor.fetchone():
+            return None
+        
+        # Atualizar dados básicos do orçamento
+        update_fields = []
+        update_values = []
+        
+        # Campos que podem ser atualizados
+        updatable_fields = [
+            "client_id", "description", "valid_until", 
+            "total_value", "notes", "status"
+        ]
+        
+        for field in updatable_fields:
+            if field in quote_data and quote_data[field] is not None:
+                update_fields.append(f"{field} = %s")
+                update_values.append(quote_data[field])
+        
+        if update_fields:
+            # Adicionar updated_at
+            update_fields.append("updated_at = CURRENT_TIMESTAMP")
+            
+            # Construir e executar a consulta de atualização
+            update_query = f"UPDATE landscaping_quotes SET {', '.join(update_fields)} WHERE id = %s"
+            update_values.append(quote_id)
+            cursor.execute(update_query, update_values)
+        
+        # Atualizar itens do orçamento, se fornecidos
+        if "items" in quote_data and quote_data["items"]:
+            # Remover itens existentes
+            cursor.execute("DELETE FROM landscaping_quote_items WHERE quote_id = %s", (quote_id,))
+            
+            # Inserir novos itens
+            for item in quote_data["items"]:
+                subtotal = item["quantity"] * item["unit_price"]
+                insert_item_query = """
+                INSERT INTO landscaping_quote_items 
+                (quote_id, service_id, quantity, unit_price, subtotal, description) 
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """
+                
+                cursor.execute(
+                    insert_item_query, 
+                    (
+                        quote_id, 
+                        item["service_id"], 
+                        item["quantity"], 
+                        item["unit_price"], 
+                        subtotal,
+                        item.get("description", "")
+                    )
+                )
+        
+        # Confirmar transação
+        conn.commit()
+        
+        # Retornar o orçamento atualizado
+        return get_quote(quote_id)
+    except Exception as e:
+        # Reverter transação em caso de erro
+        conn.rollback()
+        print(f"Erro ao atualizar orçamento: {str(e)}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
 def get_supplier(supplier_id: int) -> Optional[Dict[str, Any]]:
     """
     Obtém um fornecedor específico pelo ID.

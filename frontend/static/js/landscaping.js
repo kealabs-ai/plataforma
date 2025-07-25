@@ -1,30 +1,65 @@
 const API_URL = "http://localhost:8000";
 
-// Configurar eventos para itens de orçamento
+// Função para calcular o subtotal de uma linha e o total geral
+function calculateQuoteTotal() {
+    let grandTotal = 0;
+    $('#tableBody tr').each(function() {
+        const $row = $(this);
+        const quantity = parseFloat($row.find('.quantity-input').val()) || 0;
+        const price = parseFloat($row.find('.price-input').val()) || 0;
+        const subtotal = (quantity * price).toFixed(2); // Arredonda para 2 casas decimais
+
+        $row.find('.subtotal-input').val(subtotal);
+        grandTotal += parseFloat(subtotal);
+    });
+    $('#grandTotal').val(grandTotal.toFixed(2)); // Atualiza o total geral
+    $('#quote-total-value').val(grandTotal.toFixed(2)); // Atualiza o campo de valor total do orçamento
+}
+
+// Função para calcular o subtotal de uma linha
+function calculateRowSubtotal($row) {
+    const quantity = parseFloat($row.find('.quantity-input').val()) || 0;
+    const price = parseFloat($row.find('.price-input').val()) || 0;
+    const subtotal = quantity * price;
+    $row.find('.subtotal-input').val(subtotal.toFixed(2));
+    return subtotal;
+}
+
+// Inicializar os dropdowns e configurar eventos
 function setupQuoteItemEvents() {
-    $('.remove-item').off('click').on('click', function() {
-        if ($('.quote-item').length > 1) {
-            $(this).closest('.quote-item').remove();
+    // Inicializar os dropdowns
+    $('.service-select').dropdown({
+        onChange: function(value, text, $selectedItem) {
+            const $dropdown = $(this);
+            const $row = $dropdown.closest('tr');
+            const priceInput = $row.find('.price-input');
+            
+            // Obter o preço do serviço selecionado
+            const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
+            priceInput.val(selectedPrice.toFixed(2));
+            
+            // Calcular subtotal
+            const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
+            $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
+            
+            // Recalcular total
             calculateQuoteTotal();
         }
     });
     
-    $('.quantity-input, .price-input').off('input').on('input', function() {
-        const row = $(this).closest('.quote-item');
-        const quantity = parseFloat(row.find('.quantity-input').val()) || 0;
-        const price = parseFloat(row.find('.price-input').val()) || 0;
-        row.find('.subtotal-input').val((quantity * price).toFixed(2));
+    // Configurar eventos para inputs de quantidade e preço
+    $('#tableBody').on('input', '.quantity-input, .price-input', function() {
+        const $row = $(this).closest('tr');
+        const quantity = parseFloat($row.find('.quantity-input').val()) || 0;
+        const price = parseFloat($row.find('.price-input').val()) || 0;
+        $row.find('.subtotal-input').val((quantity * price).toFixed(2));
         calculateQuoteTotal();
     });
     
-    $('.service-select').off('change').on('change', function() {
-        const row = $(this).closest('.quote-item');
-        const serviceId = $(this).val();
-        const service = mockServices.find(s => s.id == serviceId);
-        if (service) {
-            row.find('.price-input').val(service.base_price.toFixed(2));
-            const quantity = parseFloat(row.find('.quantity-input').val()) || 1;
-            row.find('.subtotal-input').val((quantity * service.base_price).toFixed(2));
+    // Configurar evento para remover linha
+    $('#tableBody').on('click', '.remove-item', function() {
+        if ($('#tableBody tr').length > 1) {
+            $(this).closest('tr').remove();
             calculateQuoteTotal();
         }
     });
@@ -73,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Adicionar item ao orçamento
     $('#add-quote-item').on('click', function() {
+        // Adicionar um novo item normalmente
         const newItem = $('.quote-item').first().clone();
         newItem.find('input').val('');
         newItem.find('select').val('');
@@ -1462,8 +1498,8 @@ function formatDate(dateString) {
                 // Limpar o formulário
                 $('#add-quote-form')[0].reset();
                 
-                // Limpar itens existentes, exceto o primeiro
-                $('#quote-items .quote-item:not(:first)').remove();
+                // Limpar todas as linhas da tabela
+                $('#tableBody').empty();
                 
                 // Preencher os campos do formulário
                 $('#add-quote-form select[name="client_id"]').val(quote.client_id).trigger('change');
@@ -1482,37 +1518,17 @@ function formatDate(dateString) {
                     success: function(servicesResponse) {
                         const services = servicesResponse.items || [];
                         
-                        // Limpar o primeiro item
-                        const firstItem = $('#quote-items .quote-item').first();
-                        firstItem.find('input').val('');
-                        firstItem.find('.quantity-input').val('1');
-                        firstItem.find('.service-select').dropdown('clear');
+                        // Resetar o total geral
+                        $('#grandTotal').val('0.00');
+                        $('#quote-total-value').val('0.00');
                         
-                        // Preencher o dropdown de serviços
-                        firstItem.find('.service-select .menu').empty();
-                        services.forEach(function(service) {
-                            const option = `<div class="item" data-value="${service.id}" data-price="${service.base_price}">${service.service_name}</div>`;
-                            firstItem.find('.service-select .menu').append(option);
-                        });
-                        
-                        // Adicionar os itens do orçamento
+                        // Adicionar os itens do orçamento à tabela
                         if (quote.items && quote.items.length > 0) {
-                            // Preencher o primeiro item
-                            const firstQuoteItem = quote.items[0];
-                            firstItem.find('.service-select').dropdown('set selected', firstQuoteItem.service_id);
-                            firstItem.find('.quantity-input').val(firstQuoteItem.quantity);
-                            firstItem.find('.price-input').val(parseFloat(firstQuoteItem.unit_price).toFixed(2));
-                            firstItem.find('.subtotal-input').val((firstQuoteItem.quantity * firstQuoteItem.unit_price).toFixed(2));
-                            
-                            // Adicionar os demais itens
-                            for (let i = 1; i < quote.items.length; i++) {
-                                const item = quote.items[i];
-                                
-                                // Criar um novo item
-                                const newItemHtml = `
-                                    <div class="quote-item fields">
-                                        <div class="six wide field">
-                                            <label>Serviço/Item</label>
+                            quote.items.forEach(function(item) {
+                                // Criar uma nova linha para a tabela
+                                const rowHtml = `
+                                    <tr>
+                                        <td>
                                             <div class="ui selection dropdown service-select">
                                                 <input type="hidden" name="service_id">
                                                 <i class="dropdown icon"></i>
@@ -1521,69 +1537,113 @@ function formatDate(dateString) {
                                                     <!-- Opções serão adicionadas aqui -->
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="three wide field">
-                                            <label>Quantidade</label>
-                                            <input type="number" class="quantity-input" value="1" min="1">
-                                        </div>
-                                        <div class="three wide field">
-                                            <label>Preço Unitário (R$)</label>
-                                            <input type="number" step="0.01" class="price-input">
-                                        </div>
-                                        <div class="three wide field">
-                                            <label>Subtotal (R$)</label>
-                                            <input type="number" step="0.01" class="subtotal-input" readonly>
-                                        </div>
-                                        <div class="one wide field">
-                                            <label>&nbsp;</label>
-                                            <button type="button" class="ui icon red button remove-item"><i class="trash icon"></i></button>
-                                        </div>
-                                    </div>
+                                        </td>
+                                        <td><div class="ui input"><input type="number" class="quantity-input" value="${item.quantity}" min="1"></div></td>
+                                        <td><div class="ui input"><input type="number" step="0.01" class="price-input" value="${parseFloat(item.unit_price).toFixed(2)}"></div></td>
+                                        <td><div class="ui input"><input type="number" step="0.01" class="subtotal-input" readonly value="${(item.quantity * item.unit_price).toFixed(2)}"></div></td>
+                                        <td class="center aligned"><button type="button" class="ui icon red mini button remove-item"><i class="trash icon"></i></button></td>
+                                    </tr>
                                 `;
                                 
-                                // Adicionar o novo item ao formulário
-                                $('#quote-items').append(newItemHtml);
+                                // Adicionar a linha à tabela
+                                $('#tableBody').append(rowHtml);
                                 
-                                // Obter o novo item adicionado
-                                const newItem = $('#quote-items .quote-item').last();
+                                // Obter a linha adicionada
+                                const $row = $('#tableBody tr').last();
                                 
                                 // Preencher o dropdown de serviços
                                 services.forEach(function(service) {
                                     const option = `<div class="item" data-value="${service.id}" data-price="${service.base_price}">${service.service_name}</div>`;
-                                    newItem.find('.service-select .menu').append(option);
+                                    $row.find('.service-select .menu').append(option);
                                 });
                                 
-                                // Preencher os valores do item
-                                newItem.find('.service-select').dropdown({
-                                    onChange: function(value, text, $choice) {
-                                        const price = $choice.data('price');
-                                        const row = $(this).closest('.quote-item');
+                                // Inicializar o dropdown e selecionar o serviço
+                                $row.find('.service-select').dropdown({
+                                    onChange: function(value, text, $selectedItem) {
+                                        const $dropdown = $(this);
+                                        const $row = $dropdown.closest('tr');
+                                        const priceInput = $row.find('.price-input');
                                         
-                                        if (price) {
-                                            row.find('.price-input').val(parseFloat(price).toFixed(2));
-                                            
-                                            // Calcular subtotal
-                                            const quantity = parseFloat(row.find('.quantity-input').val()) || 1;
-                                            row.find('.subtotal-input').val((quantity * price).toFixed(2));
-                                            
-                                            // Recalcular total
-                                            calculateQuoteTotal();
+                                        // Obter o preço do serviço selecionado
+                                        const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
+                                        priceInput.val(selectedPrice.toFixed(2));
+                                        
+                                        // Calcular subtotal
+                                        const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
+                                        $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
+                                        
+                                        // Recalcular total
+                                        calculateQuoteTotal();
+                                        
+                                        // Se este não é a primeira linha e um serviço foi selecionado, consolidar os itens
+                                        if (!$row.is($('#tableBody tr').first()) && value) {
+                                            consolidateQuoteItems();
                                         }
                                     }
                                 });
                                 
-                                newItem.find('.service-select').dropdown('set selected', item.service_id);
-                                newItem.find('.quantity-input').val(item.quantity);
-                                newItem.find('.price-input').val(parseFloat(item.unit_price).toFixed(2));
-                                newItem.find('.subtotal-input').val((item.quantity * item.unit_price).toFixed(2));
-                            }
-                            
-                            // Configurar eventos para os itens
-                            setupQuoteItemEvents();
+                                // Selecionar o serviço correto
+                                $row.find('.service-select').dropdown('set selected', item.service_id);
+                            });
                             
                             // Calcular o total
                             calculateQuoteTotal();
+                        } else {
+                            // Se não há itens, adicionar uma linha vazia
+                            const emptyRowHtml = `
+                                <tr>
+                                    <td>
+                                        <div class="ui selection dropdown service-select">
+                                            <input type="hidden" name="service_id">
+                                            <i class="dropdown icon"></i>
+                                            <div class="default text">Selecione</div>
+                                            <div class="menu">
+                                                <!-- Opções serão adicionadas aqui -->
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><div class="ui input"><input type="number" class="quantity-input" value="1" min="1"></div></td>
+                                    <td><div class="ui input"><input type="number" step="0.01" class="price-input" value="0.00"></div></td>
+                                    <td><div class="ui input"><input type="number" step="0.01" class="subtotal-input" readonly value="0.00"></div></td>
+                                    <td class="center aligned"><button type="button" class="ui icon red mini button remove-item"><i class="trash icon"></i></button></td>
+                                </tr>
+                            `;
+                            
+                            // Adicionar a linha vazia à tabela
+                            $('#tableBody').append(emptyRowHtml);
+                            
+                            // Obter a linha adicionada
+                            const $row = $('#tableBody tr').first();
+                            
+                            // Preencher o dropdown de serviços
+                            services.forEach(function(service) {
+                                const option = `<div class="item" data-value="${service.id}" data-price="${service.base_price}">${service.service_name}</div>`;
+                                $row.find('.service-select .menu').append(option);
+                            });
+                            
+                            // Inicializar o dropdown
+                            $row.find('.service-select').dropdown({
+                                onChange: function(value, text, $selectedItem) {
+                                    const $dropdown = $(this);
+                                    const $row = $dropdown.closest('tr');
+                                    const priceInput = $row.find('.price-input');
+                                    
+                                    // Obter o preço do serviço selecionado
+                                    const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
+                                    priceInput.val(selectedPrice.toFixed(2));
+                                    
+                                    // Calcular subtotal
+                                    const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
+                                    $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
+                                    
+                                    // Recalcular total
+                                    calculateQuoteTotal();
+                                }
+                            });
                         }
+                        
+                        // Configurar eventos para os itens da tabela
+                        setupQuoteItemEvents();
                         
                         // Alterar o título do modal
                         $('#add-quote-modal .header').text('Editar Orçamento');
@@ -1593,8 +1653,10 @@ function formatDate(dateString) {
                             updateQuote(id);
                         });
                         
-                        // Mostrar o modal
-                        $('#add-quote-modal').modal('show');
+                        // Mostrar o modal e impedir que feche ao clicar fora
+                        $('#add-quote-modal').modal({
+                            closable: false
+                        }).modal('show');
                     },
                     error: function(error) {
                         console.error('Erro ao carregar serviços:', error);
@@ -1953,14 +2015,14 @@ function formatDate(dateString) {
             return;
         }
         
-        // Coletar itens do orçamento
+        // Coletar itens do orçamento da tabela
         const items = [];
-        const subtotal = 0.0;
-        $('.quote-item').each(function() {
+        $('#tableBody tr').each(function() {
             const serviceId = $(this).find('.service-select').dropdown('get value');
             const quantity = parseFloat($(this).find('.quantity-input').val()) || 0;
             const unitPrice = parseFloat($(this).find('.price-input').val()) || 0;
-            subtotal = quantity * unitPrice || 0.0;
+            const subtotal = quantity * unitPrice;
+            
             if (serviceId && quantity > 0 && unitPrice > 0) {
                 items.push({
                     service_id: parseInt(serviceId),
@@ -1990,8 +2052,8 @@ function formatDate(dateString) {
         console.log('Atualizando orçamento:', quoteData);
         
         $.ajax({
-            url: `${API_URL}/api/landscaping/quote/${id}`,
-            method: 'PUT', // Ou POST, dependendo da API
+            url: `${API_URL}/api/landscaping/quote/${id}?user_id=${quoteData.user_id}`,
+            method: 'PUT', // Usando PUT conforme implementado na API
             contentType: 'application/json',
             data: JSON.stringify(quoteData),
             headers: {
@@ -2046,9 +2108,9 @@ function formatDate(dateString) {
                     return;
                 }
                 
-                // Coletar itens do orçamento
+                // Coletar itens do orçamento da tabela
                 const items = [];
-                $('.quote-item').each(function() {
+                $('#tableBody tr').each(function() {
                     const serviceId = $(this).find('.service-select').dropdown('get value');
                     const quantity = parseFloat($(this).find('.quantity-input').val()) || 0;
                     const unitPrice = parseFloat($(this).find('.price-input').val()) || 0;
@@ -2554,6 +2616,11 @@ function formatDate(dateString) {
                                 
                                 // Recalcular total
                                 calculateQuoteTotal();
+                                
+                                // Se este não é o primeiro item e um serviço foi selecionado, consolidar os itens
+                                if (!row.is($('.quote-item').first()) && value) {
+                                    consolidateQuoteItems();
+                                }
                             }
                         }
                     });
@@ -2565,12 +2632,52 @@ function formatDate(dateString) {
         });
     }
     
+    // Função para consolidar itens do orçamento com o mesmo serviço
+    function consolidateQuoteItems() {
+        // Criar um mapa para armazenar os itens por serviço
+        const serviceMap = {};
+        
+        // Percorrer todas as linhas da tabela
+        $('#tableBody tr').each(function() {
+            const $row = $(this);
+            const serviceId = $row.find('.service-select').dropdown('get value');
+            
+            // Ignorar linhas sem serviço selecionado
+            if (!serviceId) return;
+            
+            // Se o serviço já existe no mapa, consolidar
+            if (serviceMap[serviceId]) {
+                // Somar a quantidade
+                const existingQuantity = parseFloat(serviceMap[serviceId].find('.quantity-input').val()) || 0;
+                const currentQuantity = parseFloat($row.find('.quantity-input').val()) || 0;
+                serviceMap[serviceId].find('.quantity-input').val(existingQuantity + currentQuantity);
+                
+                // Recalcular o subtotal da linha existente
+                const price = parseFloat(serviceMap[serviceId].find('.price-input').val()) || 0;
+                const newQuantity = existingQuantity + currentQuantity;
+                serviceMap[serviceId].find('.subtotal-input').val((price * newQuantity).toFixed(2));
+                
+                // Remover a linha atual
+                $row.remove();
+            } else {
+                // Adicionar ao mapa
+                serviceMap[serviceId] = $row;
+            }
+        });
+        
+        // Recalcular o total geral
+        calculateQuoteTotal();
+    }
+    
     // Função para calcular o total do orçamento
     function calculateQuoteTotal() {
         let total = 0;
         $('.subtotal-input').each(function() {
             total += parseFloat($(this).val()) || 0;
         });
+        
+        // Atualizar o total geral (sem desconto)
+        $('#grandTotal').val(total.toFixed(2));
         
         const discount = parseFloat($('[name="discount"]').val()) || 0;
         total = total * (1 - discount / 100);
@@ -2597,20 +2704,46 @@ function formatDate(dateString) {
         });
         
         $('#add-quote-btn').on('click', function() {
-            // Limpar itens existentes, exceto o primeiro
-            $('#quote-items .quote-item:not(:first)').remove();
+            // Limpar todas as linhas da tabela
+            $('#tableBody').empty();
             
-            // Limpar valores do primeiro item
-            const firstItem = $('#quote-items .quote-item').first();
-            firstItem.find('input').val('');
-            firstItem.find('.quantity-input').val('1');
-            firstItem.find('.service-select').dropdown('clear');
+            // Resetar o total geral
+            $('#grandTotal').val('0.00');
+            $('#quote-total-value').val('0.00');
             
             // Carregar clientes e serviços
             loadClientsInDropdowns();
             
-            // Abrir o modal
-            $('#add-quote-modal').modal('show');
+            // Abrir o modal e impedir que feche ao clicar fora
+            $('#add-quote-modal').modal({
+                closable: false
+            }).modal('show');
+            
+            // Adicionar uma linha inicial à tabela
+            const initialRowHtml = `
+                <tr>
+                    <td>
+                        <div class="ui selection dropdown service-select">
+                            <input type="hidden" name="service_id">
+                            <i class="dropdown icon"></i>
+                            <div class="default text">Selecione</div>
+                            <div class="menu">
+                                <!-- Opções serão adicionadas aqui -->
+                            </div>
+                        </div>
+                    </td>
+                    <td><div class="ui input"><input type="number" class="quantity-input" value="1" min="1"></div></td>
+                    <td><div class="ui input"><input type="number" step="0.01" class="price-input" value="0.00"></div></td>
+                    <td><div class="ui input"><input type="number" step="0.01" class="subtotal-input" readonly value="0.00"></div></td>
+                    <td class="center aligned"><button type="button" class="ui icon red mini button remove-item"><i class="trash icon"></i></button></td>
+                </tr>
+            `;
+            
+            // Adicionar a linha inicial à tabela
+            $('#tableBody').append(initialRowHtml);
+            
+            // Obter a linha adicionada
+            const $firstRow = $('#tableBody tr').first();
             
             // Carregar serviços para o primeiro item
             $.ajax({
@@ -2622,30 +2755,31 @@ function formatDate(dateString) {
                 success: function(response) {
                     if (response && response.items && response.items.length > 0) {
                         // Limpar o dropdown existente
-                        firstItem.find('.service-select .menu').empty();
+                        $firstRow.find('.service-select .menu').empty();
                         
                         // Adicionar os serviços ao dropdown
                         response.items.forEach(function(service) {
                             const option = `<div class="item" data-value="${service.id}" data-price="${service.base_price}">${service.service_name}</div>`;
-                            firstItem.find('.service-select .menu').append(option);
+                            $firstRow.find('.service-select .menu').append(option);
                         });
                         
                         // Inicializar o dropdown
-                        firstItem.find('.service-select').dropdown({
-                            onChange: function(value, text, $choice) {
-                                const price = $choice.data('price');
-                                const row = $(this).closest('.quote-item');
+                        $firstRow.find('.service-select').dropdown({
+                            onChange: function(value, text, $selectedItem) {
+                                const $dropdown = $(this);
+                                const $row = $dropdown.closest('tr');
+                                const priceInput = $row.find('.price-input');
                                 
-                                if (price) {
-                                    row.find('.price-input').val(parseFloat(price).toFixed(2));
-                                    
-                                    // Calcular subtotal
-                                    const quantity = parseFloat(row.find('.quantity-input').val()) || 1;
-                                    row.find('.subtotal-input').val((quantity * price).toFixed(2));
-                                    
-                                    // Recalcular total
-                                    calculateQuoteTotal();
-                                }
+                                // Obter o preço do serviço selecionado
+                                const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
+                                priceInput.val(selectedPrice.toFixed(2));
+                                
+                                // Calcular subtotal
+                                const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
+                                $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
+                                
+                                // Recalcular total
+                                calculateQuoteTotal();
                             }
                         });
                     }
@@ -2663,7 +2797,7 @@ function formatDate(dateString) {
         
         // Configurar eventos para itens de orçamento
         $(document).on('input', '.quantity-input', function() {
-            const row = $(this).closest('.quote-item');
+            const row = $(this).closest('tr');
             const quantity = parseFloat($(this).val()) || 0;
             const price = parseFloat(row.find('.price-input').val()) || 0;
             row.find('.subtotal-input').val((quantity * price).toFixed(2));
@@ -2671,7 +2805,7 @@ function formatDate(dateString) {
         });
         
         $(document).on('input', '.price-input', function() {
-            const row = $(this).closest('.quote-item');
+            const row = $(this).closest('tr');
             const price = parseFloat($(this).val()) || 0;
             const quantity = parseFloat(row.find('.quantity-input').val()) || 0;
             row.find('.subtotal-input').val((quantity * price).toFixed(2));
@@ -2679,12 +2813,14 @@ function formatDate(dateString) {
         });
         
         // Adicionar item ao orçamento
-        $('#add-quote-item').on('click', function() {
-            // Criar um novo item a partir do HTML original
-            const newItemHtml = `
-                <div class="quote-item fields">
-                    <div class="six wide field">
-                        <label>Serviço/Item</label>
+        $('#add-quote-item').on('click', function(e) {
+            // Prevenir comportamento padrão do botão para evitar que o modal feche
+            e.preventDefault();
+            
+            // Criar uma nova linha para a tabela
+            const newRowHtml = `
+                <tr>
+                    <td>
                         <div class="ui selection dropdown service-select">
                             <input type="hidden" name="service_id">
                             <i class="dropdown icon"></i>
@@ -2693,33 +2829,21 @@ function formatDate(dateString) {
                                 <!-- Opções serão adicionadas aqui -->
                             </div>
                         </div>
-                    </div>
-                    <div class="three wide field">
-                        <label>Quantidade</label>
-                        <input type="number" class="quantity-input" value="1" min="1">
-                    </div>
-                    <div class="three wide field">
-                        <label>Preço Unitário (R$)</label>
-                        <input type="number" step="0.01" class="price-input">
-                    </div>
-                    <div class="three wide field">
-                        <label>Subtotal (R$)</label>
-                        <input type="number" step="0.01" class="subtotal-input" readonly>
-                    </div>
-                    <div class="one wide field">
-                        <label>&nbsp;</label>
-                        <button type="button" class="ui icon red button remove-item"><i class="trash icon"></i></button>
-                    </div>
-                </div>
+                    </td>
+                    <td><div class="ui input"><input type="number" class="quantity-input" value="1" min="1"></div></td>
+                    <td><div class="ui input"><input type="number" step="0.01" class="price-input" value="0.00"></div></td>
+                    <td><div class="ui input"><input type="number" step="0.01" class="subtotal-input" readonly value="0.00"></div></td>
+                    <td class="center aligned"><button type="button" class="ui icon red mini button remove-item"><i class="trash icon"></i></button></td>
+                </tr>
             `;
             
-            // Adicionar o novo item ao formulário
-            $('#quote-items').append(newItemHtml);
+            // Adicionar a nova linha à tabela
+            $('#tableBody').append(newRowHtml);
             
-            // Obter o novo item adicionado
-            const newItem = $('#quote-items .quote-item').last();
+            // Obter a nova linha adicionada
+            const $newRow = $('#tableBody tr').last();
             
-            // Adicionar os serviços ao dropdown do novo item
+            // Adicionar os serviços ao dropdown da nova linha
             $.ajax({
                 url: `${API_URL}/api/landscaping/service`,
                 method: 'GET',
@@ -2731,36 +2855,59 @@ function formatDate(dateString) {
                         // Adicionar os serviços ao dropdown
                         response.items.forEach(function(service) {
                             const option = `<div class="item" data-value="${service.id}" data-price="${service.base_price}">${service.service_name}</div>`;
-                            newItem.find('.service-select .menu').append(option);
+                            $newRow.find('.service-select .menu').append(option);
                         });
                         
                         // Inicializar o dropdown
-                        newItem.find('.service-select').dropdown({
-                            onChange: function(value, text, $choice) {
-                                const price = $choice.data('price');
-                                const row = $(this).closest('.quote-item');
+                        $newRow.find('.service-select').dropdown({
+                            onChange: function(value, text, $selectedItem) {
+                                const $dropdown = $(this);
+                                const $row = $dropdown.closest('tr');
+                                const priceInput = $row.find('.price-input');
                                 
-                                if (price) {
-                                    row.find('.price-input').val(parseFloat(price).toFixed(2));
-                                    
-                                    // Calcular subtotal
-                                    const quantity = parseFloat(row.find('.quantity-input').val()) || 1;
-                                    row.find('.subtotal-input').val((quantity * price).toFixed(2));
-                                    
-                                    // Recalcular total
-                                    calculateQuoteTotal();
-                                }
+                                // Obter o preço do serviço selecionado
+                                const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
+                                priceInput.val(selectedPrice.toFixed(2));
+                                
+                                // Calcular subtotal
+                                const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
+                                $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
+                                
+                                // Recalcular total
+                                calculateQuoteTotal();
                             }
                         });
+                        
+                        // Configurar eventos para inputs de quantidade e preço na nova linha
+                        $newRow.find('.quantity-input, .price-input').on('input', function() {
+                            const quantity = parseFloat($newRow.find('.quantity-input').val()) || 0;
+                            const price = parseFloat($newRow.find('.price-input').val()) || 0;
+                            $newRow.find('.subtotal-input').val((quantity * price).toFixed(2));
+                            calculateQuoteTotal();
+                        });
+                        
+                        // Configurar evento para remover linha
+                        $newRow.find('.remove-item').on('click', function() {
+                            if ($('#tableBody tr').length > 1) {
+                                $newRow.remove();
+                                calculateQuoteTotal();
+                            }
+                        });
+                        
+                        // Recalcular totais
+                        calculateQuoteTotal();
                     }
                 }
             });
+            
+            // Garantir que o modal permaneça aberto
+            return false;
         });
         
         // Remover item do orçamento
         $(document).on('click', '.remove-item', function() {
-            if ($('.quote-item').length > 1) {
-                $(this).closest('.quote-item').remove();
+            if ($('#tableBody tr').length > 1) {
+                $(this).closest('tr').remove();
                 calculateQuoteTotal();
             }
         });

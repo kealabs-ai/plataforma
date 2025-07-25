@@ -96,6 +96,20 @@ services:
       - kognia-network
     restart: unless-stopped
 
+  # WAHA - WhatsApp HTTP API
+  waha:
+    image: devlikeapro/waha
+    ports:
+      - "3000:3000"
+    environment:
+      - WHATSAPP_HOOK_URL=http://api:8000/webhook/whatsapp
+      - WHATSAPP_HOOK_EVENTS=message,session.status
+    volumes:
+      - waha-data:/app/.sessions
+    networks:
+      - kognia-network
+    restart: unless-stopped
+
 networks:
   kognia-network:
     driver: bridge
@@ -103,3 +117,4 @@ networks:
 volumes:
   db_data:
   n8n-data:
+  waha-data:
