@@ -1029,5 +1029,11 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
-<script src="{{ url_for('static', filename='js/landscaping.js') }}"></script>
+<!-- Módulos do Landscaping -->
+<script src="{{ url_for('static', filename='js/landscaping_core.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landscaping_projects.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landscaping_contacts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landscaping_quotes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landscaping_services.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landscaping_maintenance.js') }}"></script>
 {% endblock %}
