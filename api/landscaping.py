@@ -220,9 +220,11 @@ class ClientUpdate(BaseModel):
     last_interaction_date: Optional[str] = None
     next_follow_up_date: Optional[str] = None
     notes: Optional[str] = None
+    img_profile: Optional[str] = None
 
 class ClientResponse(ClientBase):
     id: int
+    img_profile: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

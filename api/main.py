@@ -53,6 +53,7 @@ from beef_cattle_mock import router as beef_cattle_mock_router
 # Importar os novos routers simplificados
 from floriculture import router as floriculture_router
 from landscaping import router as landscaping_router
+from whatsapp_integration import router as whatsapp_router
 
 # Importa a instância do banco de dados (certifique-se de que milk_db está acessível)
 from database_queries.milk_database_query import * # Importa a instância global
@@ -67,7 +68,7 @@ app = FastAPI(
 # Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "http://localhost:8501", "http://localhost:8000"],  # Permite todas as origens para desenvolvimento
+    allow_origins=["*", "http://localhost:8501", "http://localhost:8000", "http://localhost:3000"],  # Permite todas as origens para desenvolvimento
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,6 +106,7 @@ app.include_router(beef_cattle_mock_router)
 # Incluir os novos routers sem prefixo adicional, pois já têm seus próprios prefixos
 app.include_router(floriculture_router)
 app.include_router(landscaping_router)
+app.include_router(whatsapp_router)
 
 # --- Modelos Pydantic para as Novas Respostas ---
 class MonthlyMilkProductionResponse(BaseModel):
@@ -465,6 +467,13 @@ async def beef_cattle_direct_test():
 @app.get("/.well-known/appspecific/com.chrome.devtools.json")
 async def chrome_devtools():
     return {}
+
+# Webhook do WhatsApp
+@app.post("/webhook/whatsapp")
+async def whatsapp_webhook_main(data: dict):
+    """Webhook principal para receber eventos do WhatsApp"""
+    print(f"Webhook WhatsApp recebido: {data}")
+    return {"status": "received"}
 
 # Rotas de proxy para compatibilidade com /api/agro/...
 @app.get("/api/agro/dashboard-data")

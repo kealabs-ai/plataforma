@@ -1326,7 +1326,9 @@ def create_client(
     status: str = "Lead",
     last_interaction_date: Optional[str] = None,
     next_follow_up_date: Optional[str] = None,
-    notes: Optional[str] = None
+    notes: Optional[str] = None,
+    id_whatsapp: Optional[str] = None,
+    img_profile: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Cria um novo cliente de paisagismo.
@@ -1339,16 +1341,16 @@ def create_client(
         INSERT INTO landscaping_crm_clients (
             user_id, client_name, contact_person, email, phone_number, 
             address, city, state, zip_code, client_type, industry, 
-            status, last_interaction_date, next_follow_up_date, notes
+            status, last_interaction_date, next_follow_up_date, notes, id_whatsapp, img_profile
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         """
         
         cursor.execute(query, (
             user_id, client_name, contact_person, email, phone_number,
             address, city, state, zip_code, client_type, industry,
-            status, last_interaction_date, next_follow_up_date, notes
+            status, last_interaction_date, next_follow_up_date, notes, id_whatsapp, img_profile
         ))
         
         client_id = cursor.lastrowid
@@ -1376,8 +1378,14 @@ def get_all_clients(
     cursor = conn.cursor(dictionary=True)
     
     try:
-        # Construir a consulta com filtros
-        query = "SELECT * FROM landscaping_crm_clients WHERE 1=1"
+        # Construir a consulta com filtros incluindo img_profile
+        query = """
+        SELECT id, user_id, client_name, contact_person, email, phone_number, 
+               address, city, state, zip_code, client_type, industry, status, 
+               last_interaction_date, next_follow_up_date, notes, id_whatsapp, 
+               img_profile, created_at, updated_at 
+        FROM landscaping_crm_clients WHERE 1=1
+        """
         params = []
         
         if "user_id" in filters:
@@ -1455,7 +1463,13 @@ def get_client(client_id: int) -> Optional[Dict[str, Any]]:
     cursor = conn.cursor(dictionary=True)
     
     try:
-        query = "SELECT * FROM landscaping_crm_clients WHERE id = %s"
+        query = """
+        SELECT id, user_id, client_name, contact_person, email, phone_number, 
+               address, city, state, zip_code, client_type, industry, status, 
+               last_interaction_date, next_follow_up_date, notes, id_whatsapp, 
+               img_profile, created_at, updated_at 
+        FROM landscaping_crm_clients WHERE id = %s
+        """
         cursor.execute(query, (client_id,))
         return cursor.fetchone()
     except Exception as e:
@@ -1507,6 +1521,30 @@ def update_client(
     except Exception as e:
         print(f"Erro ao atualizar cliente de paisagismo: {str(e)}")
         conn.rollback()
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_client_by_whatsapp_id(whatsapp_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Busca um cliente pelo ID do WhatsApp
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        query = """
+        SELECT id, user_id, client_name, contact_person, email, phone_number, 
+               address, city, state, zip_code, client_type, industry, status, 
+               last_interaction_date, next_follow_up_date, notes, id_whatsapp, 
+               img_profile, created_at, updated_at 
+        FROM landscaping_crm_clients WHERE id_whatsapp = %s
+        """
+        cursor.execute(query, (whatsapp_id,))
+        return cursor.fetchone()
+    except Exception as e:
+        print(f"Erro ao buscar cliente por WhatsApp ID: {e}")
         return None
     finally:
         cursor.close()

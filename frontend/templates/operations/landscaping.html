@@ -134,6 +134,38 @@
         background-color: #db2828 !important;
         color: white !important;
     }
+    
+    #sync-whatsapp-btn {
+        background-color: #25D366 !important;
+        color: white !important;
+    }
+    
+    #sync-whatsapp-btn:hover {
+        background-color: #128C7E !important;
+    }
+    
+    #whatsapp-sync-modal .header {
+        background-color: #25D366 !important;
+        color: white !important;
+    }
+    
+    #sync-progress .bar {
+        background-color: #25D366 !important;
+    }
+    
+    #sync-progress.error .bar {
+        background-color: #db2828 !important;
+    }
+    
+    .ui.statistics .statistic > .value {
+        color: #25D366 !important;
+    }
+    
+    #sync-status.warning {
+        background-color: #fffaf3 !important;
+        border-color: #fbbd08 !important;
+        color: #b58105 !important;
+    }
 </style>
 {% endblock %}
 
@@ -263,6 +295,9 @@
         <button class="ui green button" id="add-contact-btn">
             <i class="plus icon"></i> Novo Contato
         </button>
+        <button class="ui blue button" id="sync-whatsapp-btn">
+            <i class="whatsapp icon"></i> Sincronizar com WhatsApp
+        </button>
 
         <div class="ui divider"></div>
 
@@ -299,6 +334,19 @@
             </div>
         </div>
 
+        <div class="ui form" style="margin-bottom: 15px;">
+            <div class="inline field">
+                <label>Mostrar</label>
+                <select class="ui compact dropdown" id="contacts-page-size">
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <label>contatos por página</label>
+            </div>
+        </div>
+        
         <table class="ui celled table">
             <thead>
                 <tr>
@@ -317,7 +365,15 @@
                 <!-- Dados serão carregados via JavaScript -->
             </tbody>
         </table>
-        <div id="contacts-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+        
+        <div class="ui grid" style="margin-top: 20px;">
+            <div class="eight wide column">
+                <div id="contacts-pagination-info"></div>
+            </div>
+            <div class="eight wide column right aligned">
+                <div id="contacts-pagination" class="ui pagination menu"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Maintenance Tab -->
@@ -407,11 +463,18 @@
 
         <div class="ui divider"></div>
 
-        <div class="ui stackable cards" id="services-cards">
-            <!-- Serviços serão carregados via JavaScript -->
+        <div class="ui form" style="margin-bottom: 15px;">
+            <div class="inline field">
+                <label>Mostrar</label>
+                <select class="ui compact dropdown" id="services-page-size">
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <label>serviços por página</label>
+            </div>
         </div>
-
-        <div class="ui divider"></div>
 
         <table class="ui celled table">
             <thead>
@@ -430,7 +493,15 @@
                 <!-- Dados serão carregados via JavaScript -->
             </tbody>
         </table>
-        <div id="services-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+        
+        <div class="ui grid" style="margin-top: 20px;">
+            <div class="eight wide column">
+                <div id="services-pagination-info"></div>
+            </div>
+            <div class="eight wide column right aligned">
+                <div id="services-pagination" class="ui pagination menu"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Quotes Tab -->
@@ -475,6 +546,19 @@
             </div>
         </div>
 
+        <div class="ui form" style="margin-bottom: 15px;">
+            <div class="inline field">
+                <label>Mostrar</label>
+                <select class="ui compact dropdown" id="quotes-page-size">
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <label>orçamentos por página</label>
+            </div>
+        </div>
+        
         <table class="ui celled table">
             <thead>
                 <tr>
@@ -492,7 +576,15 @@
                 <!-- Dados serão carregados via JavaScript -->
             </tbody>
         </table>
-        <div id="quotes-pagination" class="ui center aligned container" style="margin-top: 20px;"></div>
+        
+        <div class="ui grid" style="margin-top: 20px;">
+            <div class="eight wide column">
+                <div id="quotes-pagination-info"></div>
+            </div>
+            <div class="eight wide column right aligned">
+                <div id="quotes-pagination" class="ui pagination menu"></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -817,7 +909,7 @@
     </div>
     <div class="content">
         <form class="ui form" id="add-quote-form">
-            <div class="two fields">
+            <div class="three fields">
                 <div class="field">
                     <label>Cliente</label>
                     <select class="ui dropdown" name="client_id" required>
@@ -828,6 +920,16 @@
                 <div class="field">
                     <label>Data de Validade</label>
                     <input type="date" name="valid_until" required>
+                </div>
+                <div class="field">
+                    <label>Status</label>
+                    <select class="ui dropdown" name="status" required>
+                        <option value="">Selecione</option>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Aprovado">Aprovado</option>
+                        <option value="Revisão">Revisão</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
                 </div>
             </div>
             <div class="field">
@@ -887,6 +989,39 @@
         <div class="ui positive right labeled icon button" id="save-quote-btn">
             Salvar
             <i class="checkmark icon"></i>
+        </div>
+    </div>
+</div>
+
+<!-- WhatsApp Sync Modal -->
+<div class="ui modal" id="whatsapp-sync-modal">
+    <div class="header">
+        <i class="whatsapp icon"></i>
+        Sincronizando Contatos do WhatsApp
+    </div>
+    <div class="content">
+        <div class="ui indicating progress" id="sync-progress">
+            <div class="bar"></div>
+            <div class="label">Preparando sincronização...</div>
+        </div>
+        <div class="ui statistics" style="margin-top: 20px;">
+            <div class="statistic">
+                <div class="value" id="contacts-processed">0</div>
+                <div class="label">Contatos Processados</div>
+            </div>
+            <div class="statistic">
+                <div class="value" id="contacts-synced">0</div>
+                <div class="label">Contatos Sincronizados</div>
+            </div>
+        </div>
+        <div class="ui message" id="sync-status" style="display: none;">
+            <div class="header">Status da Sincronização</div>
+            <p id="sync-message"></p>
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui button" id="close-sync-modal" style="display: none;">
+            Fechar
         </div>
     </div>
 </div>

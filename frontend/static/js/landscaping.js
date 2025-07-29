@@ -1196,9 +1196,11 @@ function formatDate(dateString) {
     
     
     // Função para carregar os clientes
-    function loadClients() {
+    function loadClients(page = 1, pageSize = null) {
+        const currentPageSize = pageSize || $('#contacts-page-size').val() || 10;
+        
         $.ajax({
-            url: `${API_URL}/api/landscaping/client`,
+            url: `${API_URL}/api/landscaping/client?page=${page}&page_size=${currentPageSize}`,
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
@@ -1222,12 +1224,18 @@ function formatDate(dateString) {
                         // Formatar a data do último contato
                         const lastContact = client.updated_at ? formatDate(client.updated_at) : '-';
                         
+                        // Determinar qual imagem usar
+                        let avatarImg;
+                        if (client.img_profile && client.img_profile.trim() !== '') {
+                            avatarImg = `<img src="${client.img_profile}" class="contact-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(client.client_name)}&background=random'">`;
+                        } else {
+                            avatarImg = `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(client.client_name)}&background=random" class="contact-avatar">`;
+                        }
+                        
                         // Adicionar a linha na tabela
                         tbody.append(`
                             <tr class="${statusClass}">
-                                <td>
-                                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(client.client_name)}&background=random" class="contact-avatar">
-                                </td>
+                                <td>${avatarImg}</td>
                                 <td>${client.client_name}</td>
                                 <td>${client.industry || '-'}</td>
                                 <td>${client.phone_number || '-'}</td>
@@ -1247,9 +1255,10 @@ function formatDate(dateString) {
                     });
                     
                     // Configurar paginação
-                    renderPagination(response.page, response.total_pages, 'contacts-pagination', 'loadClientsPage');
+                    renderContactsPagination(response.page, response.total_pages, response.total_items, currentPageSize);
                 } else {
                     tbody.append('<tr><td colspan="10" class="center aligned">Nenhum cliente encontrado</td></tr>');
+                    $('#contacts-pagination').empty();
                 }
             },
             error: function(error) {
@@ -1261,20 +1270,72 @@ function formatDate(dateString) {
     
     // Função para carregar uma página específica de clientes
     function loadClientsPage(page) {
-        $.ajax({
-            url: `${API_URL}/api/landscaping/client?page=${page}`,
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
-            },
-            success: function(response) {
-                // Mesmo código da função loadClients
-                // ...
-            },
-            error: function(error) {
-                console.error('Erro ao carregar clientes:', error);
+        loadClients(page);
+    }
+    
+    // Configurar evento para mudança de quantidade por página
+    $(document).on('change', '#contacts-page-size', function() {
+        loadClients(1, $(this).val());
+    });
+    
+    // Função para renderizar paginação dos contatos
+    function renderContactsPagination(currentPage, totalPages, totalItems, pageSize) {
+        const pagination = $('#contacts-pagination');
+        pagination.empty();
+        
+        if (totalPages <= 1) {
+            return;
+        }
+        
+        // Botão anterior
+        const prevDisabled = currentPage === 1 ? 'disabled' : '';
+        pagination.append(`
+            <a class="item ${prevDisabled}" onclick="${currentPage > 1 ? 'loadClientsPage(' + (currentPage - 1) + ')' : ''}">
+                <i class="left chevron icon"></i>
+            </a>
+        `);
+        
+        // Páginas
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        if (startPage > 1) {
+            pagination.append('<a class="item" onclick="loadClientsPage(1)">1</a>');
+            if (startPage > 2) {
+                pagination.append('<div class="disabled item">...</div>');
             }
-        });
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const activeClass = i === currentPage ? 'active' : '';
+            pagination.append(`
+                <a class="item ${activeClass}" onclick="loadClientsPage(${i})">
+                    ${i}
+                </a>
+            `);
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                pagination.append('<div class="disabled item">...</div>');
+            }
+            pagination.append(`<a class="item" onclick="loadClientsPage(${totalPages})">${totalPages}</a>`);
+        }
+        
+        // Botão próximo
+        const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+        pagination.append(`
+            <a class="item ${nextDisabled}" onclick="${currentPage < totalPages ? 'loadClientsPage(' + (currentPage + 1) + ')' : ''}">
+                <i class="right chevron icon"></i>
+            </a>
+        `);
+        
+        // Informações de paginação
+        const startItem = (currentPage - 1) * pageSize + 1;
+        const endItem = Math.min(currentPage * pageSize, totalItems);
+        $('#contacts-pagination-info').html(`
+            Mostrando ${startItem} a ${endItem} de ${totalItems} contatos
+        `);
     }
     
     // Funções para visualizar, editar e excluir clientes

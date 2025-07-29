@@ -109,6 +109,8 @@ services:
     networks:
       - kognia-network
     restart: unless-stopped
+    depends_on:
+      - api
 
 networks:
   kognia-network:
