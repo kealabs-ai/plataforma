@@ -1587,10 +1587,17 @@ function formatDate(dateString) {
         loadQuotes();
     });
     
+    // Configurar evento para mudança de quantidade por página de orçamentos
+    $(document).on('change', '#quotes-page-size', function() {
+        loadQuotes(1, $(this).val());
+    });
+    
     // Função para carregar os orçamentos
-    function loadQuotes() {
+    function loadQuotes(page = 1, pageSize = null) {
+        const currentPageSize = pageSize || $('#quotes-page-size').val() || 10;
+        
         $.ajax({
-            url: `${API_URL}/api/landscaping/quote`,
+            url: `${API_URL}/api/landscaping/quote?page=${page}&page_size=${currentPageSize}`,
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
@@ -1644,9 +1651,10 @@ function formatDate(dateString) {
                     });
                     
                     // Configurar paginação
-                    renderPagination(response.page, response.total_pages, 'quotes-pagination', 'loadQuotesPage');
+                    renderQuotesPagination(response.page, response.total_pages, response.total_items, currentPageSize);
                 } else {
                     tbody.append('<tr><td colspan="8" class="center aligned">Nenhum orçamento encontrado</td></tr>');
+                    $('#quotes-pagination').empty();
                 }
             },
             error: function(error) {
@@ -1658,20 +1666,67 @@ function formatDate(dateString) {
     
     // Função para carregar uma página específica de orçamentos
     function loadQuotesPage(page) {
-        $.ajax({
-            url: `${API_URL}/api/landscaping/quote?page=${page}`,
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
-            },
-            success: function(response) {
-                // Mesmo código da função loadQuotes
-                // ...
-            },
-            error: function(error) {
-                console.error('Erro ao carregar orçamentos:', error);
+        loadQuotes(page);
+    }
+    
+    // Função para renderizar paginação dos orçamentos
+    function renderQuotesPagination(currentPage, totalPages, totalItems, pageSize) {
+        const pagination = $('#quotes-pagination');
+        pagination.empty();
+        
+        if (totalPages <= 1) {
+            return;
+        }
+        
+        // Botão anterior
+        const prevDisabled = currentPage === 1 ? 'disabled' : '';
+        pagination.append(`
+            <a class="item ${prevDisabled}" onclick="${currentPage > 1 ? 'loadQuotesPage(' + (currentPage - 1) + ')' : ''}">
+                <i class="left chevron icon"></i>
+            </a>
+        `);
+        
+        // Páginas
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        if (startPage > 1) {
+            pagination.append('<a class="item" onclick="loadQuotesPage(1)">1</a>');
+            if (startPage > 2) {
+                pagination.append('<div class="disabled item">...</div>');
             }
-        });
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const activeClass = i === currentPage ? 'active' : '';
+            pagination.append(`
+                <a class="item ${activeClass}" onclick="loadQuotesPage(${i})">
+                    ${i}
+                </a>
+            `);
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                pagination.append('<div class="disabled item">...</div>');
+            }
+            pagination.append(`<a class="item" onclick="loadQuotesPage(${totalPages})">${totalPages}</a>`);
+        }
+        
+        // Botão próximo
+        const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+        pagination.append(`
+            <a class="item ${nextDisabled}" onclick="${currentPage < totalPages ? 'loadQuotesPage(' + (currentPage + 1) + ')' : ''}">
+                <i class="right chevron icon"></i>
+            </a>
+        `);
+        
+        // Informações de paginação
+        const startItem = (currentPage - 1) * pageSize + 1;
+        const endItem = Math.min(currentPage * pageSize, totalItems);
+        $('#quotes-pagination-info').html(`
+            Mostrando ${startItem} a ${endItem} de ${totalItems} orçamentos
+        `);
     }
     
     // Funções para visualizar, editar e inativar orçamentos
