@@ -1,6 +1,7 @@
 // Carregar dados dos orçamentos quando a aba de orçamentos for selecionada
 $('.menu .item[data-tab="quotes"]').on('click', function() {
     loadQuotes();
+    loadClientsForQuotes();
 });
 
 // Configurar evento para mudança de quantidade por página de orçamentos
@@ -38,6 +39,15 @@ function loadQuotes(page = 1, pageSize = null) {
                         statusBadge = 'status-rejected';
                     } else if (quote.status === 'Inativo') {
                         statusClass = 'disabled';
+                    }  else if (quote.status === 'Em Revisão') {
+                        statusClass = 'review';
+                        statusBadge = 'status-review';
+                    } else if (quote.status === 'Concluído') {
+                        statusClass = 'completed';
+                        statusBadge = 'status-completed';
+                    } else if (quote.status === 'Cancelado') {
+                        statusClass = 'canceled';
+                        statusBadge = 'status-canceled';
                     }
                     
                     const createdDate = quote.created_date ? formatDate(quote.created_date) : '-';
@@ -227,10 +237,11 @@ function editQuote(id) {
             $('#add-quote-form')[0].reset();
             $('#tableBody').empty();
             
-            $('#add-quote-form select[name="client_id"]').val(quote.client_id).trigger('change');
+            // Cliente será selecionado após carregar a lista
             $('#add-quote-form input[name="valid_until"]').val(formatDateForInput(quote.valid_until));
             $('#add-quote-form textarea[name="description"]').val(quote.description);
             $('#add-quote-form textarea[name="notes"]').val(quote.notes || '');
+            $('#add-quote-form select[name="status"]').dropdown('set selected', quote.status);
             $('#add-quote-form input[name="discount"]').val(0);
             
             $.ajax({
@@ -284,13 +295,61 @@ function editQuote(id) {
                                 }
                             });
                             
+                            // Configurar eventos para inputs de quantidade e preço
+                            $row.find('.quantity-input, .price-input').on('input', function() {
+                                const quantity = parseFloat($row.find('.quantity-input').val()) || 0;
+                                const price = parseFloat($row.find('.price-input').val()) || 0;
+                                $row.find('.subtotal-input').val((quantity * price).toFixed(2));
+                                calculateQuoteTotal();
+                            });
+                            
+                            // Configurar evento para remover linha
+                            $row.find('.remove-item').on('click', function() {
+                                if ($('#tableBody tr').length > 1) {
+                                    $row.remove();
+                                    calculateQuoteTotal();
+                                }
+                            });
+                            
                             $row.find('.service-select').dropdown('set selected', item.service_id);
                         });
                         calculateQuoteTotal();
                     }
                     
+                    // Configurar eventos globais para a tabela
+                    $('#tableBody').off('input', '.quantity-input, .price-input').on('input', '.quantity-input, .price-input', function() {
+                        const $row = $(this).closest('tr');
+                        const quantity = parseFloat($row.find('.quantity-input').val()) || 0;
+                        const price = parseFloat($row.find('.price-input').val()) || 0;
+                        $row.find('.subtotal-input').val((quantity * price).toFixed(2));
+                        calculateQuoteTotal();
+                    });
+                    
+                    $('#tableBody').off('click', '.remove-item').on('click', '.remove-item', function() {
+                        if ($('#tableBody tr').length > 1) {
+                            $(this).closest('tr').remove();
+                            calculateQuoteTotal();
+                        }
+                    });
+                    
                     setupQuoteItemEvents();
                     $('#add-quote-modal .header').text('Editar Orçamento');
+                    
+                    // Carregar clientes para o modal de edição e aguardar carregamento
+                    setTimeout(function() {
+                        loadClientsForQuotes();
+                        // Aguardar carregamento dos clientes antes de selecionar
+                        setTimeout(function() {
+                            $('#add-quote-form select[name="client_id"]').dropdown('set selected', quote.client_id);
+                        }, 500);
+                    }, 100);
+                    
+                    // Configurar botão de adicionar item no modal de edição
+                    $('#add-quote-item').off('click').on('click', function(e) {
+                        e.preventDefault();
+                        addQuoteItemRow(services);
+                        return false;
+                    });
                     
                     $('#save-quote-btn').off('click').on('click', function() {
                         updateQuote(id);
@@ -314,14 +373,27 @@ function editQuote(id) {
 }
 
 function updateQuote(id) {
+    // Limpar mensagens anteriores
+    $('#add-quote-modal .ui.message').remove();
+    
     const clientId = $('#add-quote-form select[name="client_id"]').val();
     const validUntil = $('#add-quote-form input[name="valid_until"]').val();
     const description = $('#add-quote-form textarea[name="description"]').val();
     const notes = $('#add-quote-form textarea[name="notes"]').val() || '';
+    const status = $('#add-quote-form select[name="status"]').val() || 'Pendente';
     const totalValue = parseFloat($('#quote-total-value').val()) || 0;
     
     if (!clientId || !validUntil || !description || totalValue <= 0) {
-        alert('Por favor, preencha todos os campos obrigatórios e adicione pelo menos um item ao orçamento.');
+        $('#add-quote-modal .content').prepend(`
+            <div class="ui negative message">
+                <i class="close icon"></i>
+                <div class="header">Campos obrigatórios</div>
+                <p>Por favor, preencha todos os campos obrigatórios e adicione pelo menos um item ao orçamento.</p>
+            </div>
+        `);
+        $('.ui.message .close').on('click', function() {
+            $(this).closest('.message').transition('fade');
+        });
         return;
     }
     
@@ -344,18 +416,17 @@ function updateQuote(id) {
     });
     
     const quoteData = {
-        user_id: 1,
         client_id: parseInt(clientId),
         description: description,
         valid_until: validUntil,
         total_value: totalValue,
         notes: notes,
-        status: 'Pendente',
+        status: status,
         items: items
     };
     
     $.ajax({
-        url: `${API_URL}/api/landscaping/quote/${id}?user_id=${quoteData.user_id}`,
+        url: `${API_URL}/api/landscaping/quote/${id}?user_id=1`,
         method: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(quoteData),
@@ -363,16 +434,38 @@ function updateQuote(id) {
             'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
         },
         success: function(response) {
-            alert('Orçamento atualizado com sucesso!');
-            $('#add-quote-modal').modal('hide');
-            $('#add-quote-form')[0].reset();
-            $('#add-quote-modal .header').text('Novo Orçamento');
-            $('#save-quote-btn').off('click');
-            loadQuotes();
+            $('#add-quote-modal .content').prepend(`
+                <div class="ui positive message">
+                    <i class="close icon"></i>
+                    <div class="header">Sucesso!</div>
+                    <p>Orçamento atualizado com sucesso!</p>
+                </div>
+            `);
+            $('.ui.message .close').on('click', function() {
+                $(this).closest('.message').transition('fade');
+            });
+            
+            setTimeout(function() {
+                $('#add-quote-modal').modal('hide');
+                $('#add-quote-form')[0].reset();
+                $('#tableBody').empty();
+                $('#add-quote-modal .header').text('Novo Orçamento');
+                $('#save-quote-btn').off('click');
+                loadQuotes();
+            }, 2000);
         },
         error: function(xhr, status, error) {
             console.error('Erro ao atualizar orçamento:', error);
-            alert('Erro ao atualizar orçamento: ' + (xhr.responseText || error));
+            $('#add-quote-modal .content').prepend(`
+                <div class="ui negative message">
+                    <i class="close icon"></i>
+                    <div class="header">Erro ao atualizar</div>
+                    <p>${xhr.responseText || error}</p>
+                </div>
+            `);
+            $('.ui.message .close').on('click', function() {
+                $(this).closest('.message').transition('fade');
+            });
         }
     });
 }
@@ -471,3 +564,86 @@ $('#add-quote-item').on('click', function() {
 
 // Configurar evento de desconto
 $('[name="discount"]').on('input', calculateQuoteTotal);
+
+// Função para adicionar nova linha de item no orçamento
+function addQuoteItemRow(services) {
+    const newRowHtml = `
+        <tr>
+            <td>
+                <div class="ui selection dropdown service-select">
+                    <input type="hidden" name="service_id">
+                    <i class="dropdown icon"></i>
+                    <div class="default text">Selecione</div>
+                    <div class="menu"></div>
+                </div>
+            </td>
+            <td><div class="ui input"><input type="number" class="quantity-input" value="1" min="1"></div></td>
+            <td><div class="ui input"><input type="number" step="0.01" class="price-input" value="0.00"></div></td>
+            <td><div class="ui input"><input type="number" step="0.01" class="subtotal-input" readonly value="0.00"></div></td>
+            <td class="center aligned"><button type="button" class="ui icon red mini button remove-item"><i class="trash icon"></i></button></td>
+        </tr>
+    `;
+    
+    $('#tableBody').append(newRowHtml);
+    const $newRow = $('#tableBody tr').last();
+    
+    services.forEach(function(service) {
+        const option = `<div class="item" data-value="${service.id}" data-price="${service.base_price}">${service.service_name}</div>`;
+        $newRow.find('.service-select .menu').append(option);
+    });
+    
+    $newRow.find('.service-select').dropdown({
+        onChange: function(value, text, $selectedItem) {
+            const $dropdown = $(this);
+            const $row = $dropdown.closest('tr');
+            const priceInput = $row.find('.price-input');
+            const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
+            priceInput.val(selectedPrice.toFixed(2));
+            const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
+            $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
+            calculateQuoteTotal();
+        }
+    });
+    
+    $newRow.find('.quantity-input, .price-input').on('input', function() {
+        const quantity = parseFloat($newRow.find('.quantity-input').val()) || 0;
+        const price = parseFloat($newRow.find('.price-input').val()) || 0;
+        $newRow.find('.subtotal-input').val((quantity * price).toFixed(2));
+        calculateQuoteTotal();
+    });
+    
+    $newRow.find('.remove-item').on('click', function() {
+        if ($('#tableBody tr').length > 1) {
+            $newRow.remove();
+            calculateQuoteTotal();
+        }
+    });
+    
+    calculateQuoteTotal();
+}
+
+// Função para carregar clientes para o dropdown de orçamentos
+function loadClientsForQuotes() {
+    $.ajax({
+        url: `${API_URL}/api/landscaping/client`,
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+        },
+        success: function(response) {
+            const clientSelect = $('#quote-client-filter, [name="client_id"]');
+            clientSelect.find('option:not(:first)').remove();
+            
+            if (response && response.items && response.items.length > 0) {
+                response.items.forEach(function(client) {
+                    clientSelect.append(`<option value="${client.id}">${client.client_name}</option>`);
+                });
+            }
+            
+            $('.ui.dropdown').dropdown('refresh');
+        },
+        error: function(error) {
+            console.error('Erro ao carregar clientes:', error);
+        }
+    });
+}
