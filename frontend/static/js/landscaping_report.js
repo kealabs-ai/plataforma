@@ -24,6 +24,18 @@ class LandscapingReportGenerator {
             }
             
             const quote = await response.json();
+            
+            // Buscar itens do orçamento
+            const itemsResponse = await fetch(`${this.apiUrl}/api/landscaping/quote/${quoteId}/items`, {
+                headers: {
+                    'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+                }
+            });
+            
+            if (itemsResponse.ok) {
+                quote.items = await itemsResponse.json();
+            }
+            
             // Buscar dados do cliente
             const response_crm = await fetch(`${this.apiUrl}/api/landscaping/client/${quote["client_id"]}`, {
                 headers: {
@@ -126,13 +138,16 @@ class LandscapingReportGenerator {
                 const subtotal = item.quantity * item.unit_price;
                 total += subtotal;
                 
+                // Usar descrição do item se disponível, senão usar service_name
+                const itemDescription = item.description || item.service_name || 'Serviço';
+                
                 doc.fontSize(10)
                    .fillColor('black')
                    .font('Helvetica')
-                   .text(item.service_name || 'Serviço', 50, currentY + 8)
+                   .text(itemDescription, 50, currentY + 8)
                    .text(item.quantity.toString(), 260, currentY + 8)
-                   .text(`R$ ${item.unit_price.toFixed(2)}`, 360, currentY + 8)
-                   .text(`R$ ${subtotal.toFixed(2)}`, 470, currentY + 8);
+                   .text(this.formatCurrency(item.unit_price), 360, currentY + 8)
+                   .text(this.formatCurrency(subtotal), 470, currentY + 8);
                 
                 currentY += itemHeight;
             });
@@ -146,7 +161,7 @@ class LandscapingReportGenerator {
            .fillColor('black')
            .font('Helvetica-Bold')
            .text('Total do Orçamento:', 320, currentY + 8)
-           .text(`R$ ${total.toFixed(2)}`, 470, currentY + 8);
+           .text(this.formatCurrency(total), 470, currentY + 8);
     }
 
     addFooter(doc) {
@@ -173,6 +188,14 @@ class LandscapingReportGenerator {
             return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
         }
         return phone;
+    }
+
+    formatCurrency(value) {
+        if (!value) return 'R$ 0,00';
+        return parseFloat(value).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        });
     }
 
     // Gerar PDF de projeto (futuro)

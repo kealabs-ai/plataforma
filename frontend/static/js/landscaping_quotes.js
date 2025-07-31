@@ -69,7 +69,7 @@ function loadQuotes(page = 1, pageSize = null) {
                         statusBadge = 'status-canceled';
                     }
                     
-                    const createdDate = quote.created_date ? formatDate(quote.created_date) : '-';
+                    const createdDate = quote.created_at ? formatDate(quote.created_at) : (quote.created_date ? formatDate(quote.created_date) : '-');
                     const validUntil = quote.valid_until ? formatDate(quote.valid_until) : '-';
                     
                     return `
@@ -79,7 +79,7 @@ function loadQuotes(page = 1, pageSize = null) {
                             <td>${quote.description.substring(0, 50)}${quote.description.length > 50 ? '...' : ''}</td>
                             <td>${createdDate}</td>
                             <td>${validUntil}</td>
-                            <td>R$ ${parseFloat(quote.total_value).toFixed(2)}</td>
+                            <td>${formatCurrency(quote.total_value)}</td>
                             <td><span class="status-badge ${statusBadge}">${quote.status}</span></td>
                             <td>
                                 <div class="ui mini buttons">
@@ -175,22 +175,63 @@ function viewQuote(id) {
         headers: {
             'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
         },
-        success: function(quote) {
+        success: async function(quote) {
+            let clientName = quote.client || '-';
+            
+            // Buscar nome do cliente via API
+            if (quote.client_id) {
+                try {
+                    const clientResponse = await fetch(`${API_URL}/api/landscaping/client/${quote.client_id}`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+                        }
+                    });
+                    if (clientResponse.ok) {
+                        const client = await clientResponse.json();
+                        clientName = client.client_name || clientName;
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar cliente:', error);
+                }
+            }
+            
             let itemsHtml = '';
             if (quote.items && quote.items.length > 0) {
                 itemsHtml = '<table class="ui celled table"><thead><tr><th>Serviço</th><th>Quantidade</th><th>Preço Unitário</th><th>Subtotal</th></tr></thead><tbody>';
-                quote.items.forEach(item => {
+                
+                // Buscar nomes dos serviços
+                const servicePromises = quote.items.map(async item => {
+                    let serviceName = item.service_name || 'Serviço';
+                    
+                    if (item.service_id) {
+                        try {
+                            const serviceResponse = await fetch(`${API_URL}/api/landscaping/service/${item.service_id}`, {
+                                headers: {
+                                    'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+                                }
+                            });
+                            if (serviceResponse.ok) {
+                                const service = await serviceResponse.json();
+                                serviceName = service.service_name || serviceName;
+                            }
+                        } catch (error) {
+                            console.error('Erro ao buscar serviço:', error);
+                        }
+                    }
+                    
                     const subtotal = item.quantity * item.unit_price;
-                    itemsHtml += `
+                    return `
                         <tr>
-                            <td>${item.service_name || 'Serviço'}</td>
+                            <td>${serviceName}</td>
                             <td>${item.quantity}</td>
-                            <td>R$ ${parseFloat(item.unit_price).toFixed(2)}</td>
-                            <td>R$ ${subtotal.toFixed(2)}</td>
+                            <td>${formatCurrency(item.unit_price)}</td>
+                            <td>${formatCurrency(subtotal)}</td>
                         </tr>
                     `;
                 });
-                itemsHtml += '</tbody></table>';
+                
+                const itemRows = await Promise.all(servicePromises);
+                itemsHtml += itemRows.join('') + '</tbody></table>';
             } else {
                 itemsHtml = '<p>Nenhum item no orçamento</p>';
             }
@@ -207,7 +248,7 @@ function viewQuote(id) {
                             <div class="two fields">
                                 <div class="field">
                                     <label>Cliente</label>
-                                    <p>${quote.client}</p>
+                                    <p>${clientName}</p>
                                 </div>
                                 <div class="field">
                                     <label>Status</label>
@@ -217,7 +258,7 @@ function viewQuote(id) {
                             <div class="two fields">
                                 <div class="field">
                                     <label>Data de Criação</label>
-                                    <p>${formatDate(quote.created_date)}</p>
+                                    <p>${formatDate(quote.created_at || quote.created_date)}</p>
                                 </div>
                                 <div class="field">
                                     <label>Validade</label>
@@ -234,7 +275,7 @@ function viewQuote(id) {
                             </div>
                             <div class="field">
                                 <label>Valor Total</label>
-                                <p><strong>R$ ${parseFloat(quote.total_value).toFixed(2)}</strong></p>
+                                <p><strong>${formatCurrency(quote.total_value)}</strong></p>
                             </div>
                         </div>
                     </div>
@@ -366,14 +407,8 @@ function editQuote(id) {
                     setupQuoteItemEvents();
                     $('#add-quote-modal .header').text('Editar Orçamento');
                     
-                    // Carregar clientes para o modal de edição e aguardar carregamento
-                    setTimeout(function() {
-                        loadClientsForQuotes();
-                        // Aguardar carregamento dos clientes antes de selecionar
-                        setTimeout(function() {
-                            $('#add-quote-form select[name="client_id"]').dropdown('set selected', quote.client_id);
-                        }, 500);
-                    }, 100);
+                    // Configurar busca rápida de clientes
+                    setupClientSearch(quote.client_id);
                     
                     // Configurar botão de adicionar item no modal de edição
                     $('#add-quote-item').off('click').on('click', function(e) {
@@ -655,6 +690,17 @@ function addQuoteItemRow(services) {
     calculateQuoteTotal();
 }
 
+// Função para configurar busca rápida de clientes
+function setupClientSearch(selectedClientId = null) {
+    loadClientsForQuotes();
+    
+    if (selectedClientId) {
+        setTimeout(function() {
+            $('#add-quote-form select[name="client_id"]').dropdown('set selected', selectedClientId);
+        }, 500);
+    }
+}
+
 // Função para carregar clientes para o dropdown de orçamentos
 function loadClientsForQuotes() {
     $.ajax({
@@ -680,3 +726,4 @@ function loadClientsForQuotes() {
         }
     });
 }
+

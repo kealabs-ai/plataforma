@@ -108,11 +108,11 @@ function updateMonthlyRevenue() {
                 }, 0);
             }
             
-            $('#monthly-revenue').text('R$ ' + totalRevenue.toFixed(2));
+            $('#monthly-revenue').text(formatCurrency(totalRevenue));
         },
         error: function(error) {
             console.error('Erro ao calcular receita mensal:', error);
-            $('#monthly-revenue').text('R$ 0.00');
+            $('#monthly-revenue').text(formatCurrency(0));
         }
     });
 }
@@ -146,7 +146,7 @@ function createMaintenanceCard(item) {
                     ${item.type}
                 </span>
                 <span class="right floated">
-                    ${item.cost ? 'R$ ' + parseFloat(item.cost).toFixed(2) : 'Sem custo'}
+                    ${item.cost ? formatCurrency(item.cost) : 'Sem custo'}
                 </span>
             </div>
         </div>

@@ -32,7 +32,7 @@ function loadServices(page = 1, pageSize = null) {
                             <td>${service.category}</td>
                             <td>${service.description.substring(0, 50)}${service.description.length > 50 ? '...' : ''}</td>
                             <td>${service.average_duration} horas</td>
-                            <td>R$ ${parseFloat(service.base_price).toFixed(2)}</td>
+                            <td>${formatCurrency(service.base_price)}</td>
                             <td>${service.status}</td>
                             <td>
                                 <div class="ui mini buttons">
@@ -148,7 +148,7 @@ function viewService(id) {
                                 </div>
                                 <div class="field">
                                     <label>Preço Base</label>
-                                    <p>R$ ${parseFloat(service.base_price).toFixed(2)}</p>
+                                    <p>${formatCurrency(service.base_price)}</p>
                                 </div>
                             </div>
                             <div class="field">

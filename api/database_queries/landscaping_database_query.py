@@ -1549,3 +1549,138 @@ def get_client_by_whatsapp_id(whatsapp_id: str) -> Optional[Dict[str, Any]]:
     finally:
         cursor.close()
         conn.close()
+
+def create_quote_item(
+    quote_id: int,
+    service_id: int,
+    quantity: float,
+    unit_price: float,
+    subtotal: float,
+    description: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
+    """
+    Cria um novo item de orçamento.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        query = """
+        INSERT INTO landscaping_quote_items 
+        (quote_id, service_id, quantity, unit_price, subtotal, description) 
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        
+        cursor.execute(query, (
+            quote_id, service_id, quantity, unit_price, subtotal, description
+        ))
+        
+        item_id = cursor.lastrowid
+        conn.commit()
+        
+        # Buscar o item criado com informações do serviço
+        query_select = """
+        SELECT qi.*, s.service_name, s.category
+        FROM landscaping_quote_items qi
+        JOIN landscaping_services s ON qi.service_id = s.id
+        WHERE qi.id = %s
+        """
+        cursor.execute(query_select, (item_id,))
+        return cursor.fetchone()
+    except Exception as e:
+        print(f"Erro ao criar item de orçamento: {str(e)}")
+        conn.rollback()
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def update_quote_item(
+    item_id: int,
+    quote_id: int,
+    update_data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """
+    Atualiza um item específico de orçamento.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Verificar se o item existe
+        check_query = "SELECT id FROM landscaping_quote_items WHERE id = %s AND quote_id = %s"
+        cursor.execute(check_query, (item_id, quote_id))
+        if not cursor.fetchone():
+            return None
+        
+        # Construir query de atualização
+        update_fields = []
+        update_values = []
+        
+        for field in ["service_id", "quantity", "unit_price", "subtotal", "description"]:
+            if field in update_data and update_data[field] is not None:
+                update_fields.append(f"{field} = %s")
+                update_values.append(update_data[field])
+        
+        if not update_fields:
+            # Buscar o item atual se não há campos para atualizar
+            query_select = """
+            SELECT qi.*, s.service_name, s.category
+            FROM landscaping_quote_items qi
+            JOIN landscaping_services s ON qi.service_id = s.id
+            WHERE qi.id = %s
+            """
+            cursor.execute(query_select, (item_id,))
+            return cursor.fetchone()
+        
+        update_fields.append("updated_at = CURRENT_TIMESTAMP")
+        update_query = f"UPDATE landscaping_quote_items SET {', '.join(update_fields)} WHERE id = %s AND quote_id = %s"
+        update_values.extend([item_id, quote_id])
+        
+        cursor.execute(update_query, update_values)
+        conn.commit()
+        
+        # Buscar o item atualizado
+        query_select = """
+        SELECT qi.*, s.service_name, s.category
+        FROM landscaping_quote_items qi
+        JOIN landscaping_services s ON qi.service_id = s.id
+        WHERE qi.id = %s
+        """
+        cursor.execute(query_select, (item_id,))
+        return cursor.fetchone()
+    except Exception as e:
+        print(f"Erro ao atualizar item de orçamento: {str(e)}")
+        conn.rollback()
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def delete_quote_item(item_id: int, quote_id: int) -> bool:
+    """
+    Remove um item específico de orçamento.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Verificar se o item existe
+        check_query = "SELECT id FROM landscaping_quote_items WHERE id = %s AND quote_id = %s"
+        cursor.execute(check_query, (item_id, quote_id))
+        if not cursor.fetchone():
+            return False
+        
+        # Remover o item
+        delete_query = "DELETE FROM landscaping_quote_items WHERE id = %s AND quote_id = %s"
+        cursor.execute(delete_query, (item_id, quote_id))
+        conn.commit()
+        
+        return cursor.rowcount > 0
+    except Exception as e:
+        print(f"Erro ao remover item de orçamento: {str(e)}")
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
+        conn.close()

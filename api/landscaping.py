@@ -1058,6 +1058,109 @@ async def update_maintenance_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar registro de manutenção: {str(e)}")
 
+# --- QUOTE ITEMS MODELS ---
+class QuoteItemBase(BaseModel):
+    quote_id: int
+    service_id: int
+    quantity: float
+    unit_price: float
+    subtotal: float
+    description: Optional[str] = None
+
+class QuoteItemCreate(QuoteItemBase):
+    pass
+
+class QuoteItemResponse(QuoteItemBase):
+    id: int
+    service_name: Optional[str] = None
+    category: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+# --- QUOTE ITEMS ENDPOINTS ---
+
+@router.get("/quote/{quote_id}/items", response_model=List[QuoteItemResponse])
+async def get_quote_items_endpoint(quote_id: int = Path(..., description="ID do orçamento")):
+    """
+    Obtém todos os itens de um orçamento específico.
+    """
+    try:
+        items = get_quote_items(quote_id)
+        return items
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao obter itens do orçamento: {str(e)}")
+
+@router.post("/quote/{quote_id}/items", response_model=QuoteItemResponse)
+async def create_quote_item_endpoint(
+    quote_id: int = Path(..., description="ID do orçamento"),
+    item: QuoteItemCreate = Body(...)
+):
+    """
+    Adiciona um novo item a um orçamento.
+    """
+    try:
+        # Verificar se o orçamento existe
+        quote = get_quote(quote_id)
+        if not quote:
+            raise HTTPException(status_code=404, detail=f"Orçamento com ID {quote_id} não encontrado")
+        
+        result = create_quote_item(
+            quote_id=quote_id,
+            service_id=item.service_id,
+            quantity=item.quantity,
+            unit_price=item.unit_price,
+            subtotal=item.subtotal,
+            description=item.description
+        )
+        
+        if not result:
+            raise HTTPException(status_code=500, detail="Erro ao criar item do orçamento")
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao criar item do orçamento: {str(e)}")
+
+@router.put("/quote/{quote_id}/items/{item_id}", response_model=QuoteItemResponse)
+async def update_quote_item_endpoint(
+    quote_id: int = Path(..., description="ID do orçamento"),
+    item_id: int = Path(..., description="ID do item"),
+    item_data: dict = Body(...)
+):
+    """
+    Atualiza um item específico de um orçamento.
+    """
+    try:
+        result = update_quote_item(item_id, quote_id, item_data)
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Item com ID {item_id} não encontrado no orçamento {quote_id}")
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar item do orçamento: {str(e)}")
+
+@router.delete("/quote/{quote_id}/items/{item_id}")
+async def delete_quote_item_endpoint(
+    quote_id: int = Path(..., description="ID do orçamento"),
+    item_id: int = Path(..., description="ID do item")
+):
+    """
+    Remove um item específico de um orçamento.
+    """
+    try:
+        success = delete_quote_item(item_id, quote_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Item com ID {item_id} não encontrado no orçamento {quote_id}")
+        
+        return {"message": "Item removido com sucesso"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao remover item do orçamento: {str(e)}")
+
 # --- CLIENT ENDPOINTS ---
 
 @router.post("/client", response_model=ClientResponse)

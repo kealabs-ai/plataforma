@@ -51,7 +51,7 @@ function loadProjects() {
                                 </span>
                                 <span class="right floated">
                                     <i class="dollar sign icon"></i>
-                                    ${project.budget ? 'R$ ' + parseFloat(project.budget).toFixed(2) : 'Sem orçamento'}
+                                    ${project.budget ? formatCurrency(project.budget) : 'Sem orçamento'}
                                 </span>
                             </div>
                         </div>
@@ -85,7 +85,7 @@ function loadProjects() {
                             <td>${project.end_date ? formatDate(project.end_date) : '-'}</td>
                             <td>${project.area_m2}</td>
                             <td>${project.status}</td>
-                            <td>R$ ${project.budget ? parseFloat(project.budget).toFixed(2) : '0.00'}</td>
+                            <td>${project.budget ? formatCurrency(project.budget) : formatCurrency(0)}</td>
                             <td>
                                 <div class="ui mini buttons">
                                     <button class="ui blue button" onclick="viewProject(${project.id})"><i class="eye icon"></i></button>
@@ -182,7 +182,7 @@ function viewProject(id) {
                                 </div>
                                 <div class="field">
                                     <label>Orçamento</label>
-                                    <p>R$ ${project.budget ? parseFloat(project.budget).toFixed(2) : '0.00'}</p>
+                                    <p>${project.budget ? formatCurrency(project.budget) : formatCurrency(0)}</p>
                                 </div>
                             </div>
                             <div class="field">
