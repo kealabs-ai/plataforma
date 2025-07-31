@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Query, Path, Body
+from fastapi.responses import Response
 from typing import List, Dict, Any, Optional
 from datetime import date, datetime
 from pydantic import BaseModel, validator, Field
 from database_queries.landscaping_database_query import *
+from utils.pdf_generator import QuotePDFGenerator
 import json
 
 router = APIRouter(
@@ -1213,3 +1215,34 @@ async def delete_client_endpoint(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao inativar cliente: {str(e)}")
+
+# --- PDF ENDPOINT ---
+
+@router.get("/quote/{quote_id}/pdf")
+async def generate_quote_pdf(
+    quote_id: int = Path(..., description="ID do orçamento"),
+    user_id: int = Query(..., description="ID do usuário")
+):
+    """
+    Gera PDF do orçamento de paisagismo.
+    """
+    try:
+        # Obter dados do orçamento
+        quote_data = get_quote(quote_id)
+        if not quote_data:
+            raise HTTPException(status_code=404, detail=f"Orçamento com ID {quote_id} não encontrado")
+        
+        # Gerar PDF
+        pdf_generator = QuotePDFGenerator()
+        pdf_data = pdf_generator.generate_quote_pdf(quote_data)
+        
+        # Retornar PDF como resposta
+        return Response(
+            content=pdf_data,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=orcamento_{quote_id}.pdf"}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar PDF: {str(e)}")

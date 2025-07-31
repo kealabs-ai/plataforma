@@ -24,7 +24,26 @@ function loadQuotes(page = 1, pageSize = null) {
             tbody.empty();
             
             if (response && response.items && response.items.length > 0) {
-                response.items.forEach(function(quote) {
+                const promises = response.items.map(async function(quote) {
+                    let clientName = '-';
+                    
+                    // Buscar nome do cliente via API
+                    if (quote.client_id) {
+                        try {
+                            const clientResponse = await fetch(`${API_URL}/api/landscaping/client/${quote.client_id}`, {
+                                headers: {
+                                    'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+                                }
+                            });
+                            if (clientResponse.ok) {
+                                const client = await clientResponse.json();
+                                clientName = client.client_name || '-';
+                            }
+                        } catch (error) {
+                            console.error('Erro ao buscar cliente:', error);
+                        }
+                    }
+                    
                     let statusClass = '';
                     let statusBadge = '';
                     
@@ -53,10 +72,10 @@ function loadQuotes(page = 1, pageSize = null) {
                     const createdDate = quote.created_date ? formatDate(quote.created_date) : '-';
                     const validUntil = quote.valid_until ? formatDate(quote.valid_until) : '-';
                     
-                    tbody.append(`
+                    return `
                         <tr class="${statusClass}">
                             <td>${quote.id}</td>
-                            <td>${quote.client}</td>
+                            <td>${clientName}</td>
                             <td>${quote.description.substring(0, 50)}${quote.description.length > 50 ? '...' : ''}</td>
                             <td>${createdDate}</td>
                             <td>${validUntil}</td>
@@ -70,7 +89,11 @@ function loadQuotes(page = 1, pageSize = null) {
                                 </div>
                             </td>
                         </tr>
-                    `);
+                    `;
+                });
+                
+                Promise.all(promises).then(rows => {
+                    tbody.append(rows.join(''));
                 });
                 
                 renderQuotesPagination(response.page, response.total_pages, response.total_items, currentPageSize);
@@ -172,6 +195,9 @@ function viewQuote(id) {
                 itemsHtml = '<p>Nenhum item no orçamento</p>';
             }
             
+            // Remover modal existente se houver
+            $('#view-quote-modal').remove();
+            
             $('body').append(`
                 <div class="ui modal" id="view-quote-modal">
                     <i class="close icon"></i>
@@ -213,11 +239,16 @@ function viewQuote(id) {
                         </div>
                     </div>
                     <div class="actions">
-                        <div class="ui button" onclick="$('#view-quote-modal').modal('hide')">Fechar</div>
+                        <div class="ui primary button" onclick="generateQuotePDF(${quote.id})"><i class="file pdf icon"></i> Gerar PDF</div>
+                        <div class="ui button" onclick="$('#view-quote-modal').modal('hide'); $('#view-quote-modal').remove();">Fechar</div>
                     </div>
                 </div>
             `);
-            $('#view-quote-modal').modal('show');
+            $('#view-quote-modal').modal({
+                onHidden: function() {
+                    $('#view-quote-modal').remove();
+                }
+            }).modal('show');
         },
         error: function(error) {
             console.error('Erro ao obter detalhes do orçamento:', error);
@@ -306,7 +337,7 @@ function editQuote(id) {
                             // Configurar evento para remover linha
                             $row.find('.remove-item').on('click', function() {
                                 if ($('#tableBody tr').length > 1) {
-                                    $row.remove();
+                                    $(this).closest('tr').remove();
                                     calculateQuoteTotal();
                                 }
                             });
@@ -564,6 +595,8 @@ $('#add-quote-item').on('click', function() {
 
 // Configurar evento de desconto
 $('[name="discount"]').on('input', calculateQuoteTotal);
+
+
 
 // Função para adicionar nova linha de item no orçamento
 function addQuoteItemRow(services) {

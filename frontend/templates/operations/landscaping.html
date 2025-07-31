@@ -1042,8 +1042,10 @@
 {% endblock %}
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfkit@0.13.0/js/pdfkit.standalone.js"></script>
 <script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
 <!-- Módulos do Landscaping -->
+<script src="{{ url_for('static', filename='js/landscaping_report.js') }}"></script>
 <script src="{{ url_for('static', filename='js/landscaping_core.js') }}"></script>
 <script src="{{ url_for('static', filename='js/landscaping_projects.js') }}"></script>
 <script src="{{ url_for('static', filename='js/landscaping_contacts.js') }}"></script>

@@ -1,4 +1,7 @@
-const API_URL = "http://localhost:8000";
+// Usar API_URL global se já estiver definida
+if (typeof API_URL === 'undefined') {
+    var API_URL = "http://localhost:8000";
+}
 
 // Arquivo principal responsável por integrar e carregar os demais módulos
 document.addEventListener('DOMContentLoaded', function() {

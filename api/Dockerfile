@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY . .
+RUN chmod -R 755 /app
 
 # Expose API port
 EXPOSE 8000
