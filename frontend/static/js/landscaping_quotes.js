@@ -281,6 +281,7 @@ function viewQuote(id) {
                     </div>
                     <div class="actions">
                         <div class="ui primary button" onclick="generateQuotePDF(${quote.id})"><i class="file pdf icon"></i> Gerar PDF</div>
+                        <div class="ui green button" onclick="sendQuotePDFWhatsApp(${quote.id})"><i class="whatsapp icon"></i> Enviar WhatsApp</div>
                         <div class="ui button" onclick="$('#view-quote-modal').modal('hide'); $('#view-quote-modal').remove();">Fechar</div>
                     </div>
                 </div>
@@ -690,40 +691,127 @@ function addQuoteItemRow(services) {
     calculateQuoteTotal();
 }
 
-// Função para configurar busca rápida de clientes
+// Função para enviar orçamento via WhatsApp
+function sendQuoteWhatsApp(quoteId, clientId) {
+    // Primeiro, buscar dados do cliente
+    $.ajax({
+        url: `${API_URL}/api/landscaping/client/${clientId}`,
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+        },
+        success: function(client) {
+            if (!client.phone_number) {
+                alert('Cliente não possui telefone cadastrado.');
+                return;
+            }
+            
+            // Gerar PDF do orçamento
+            fetch(`${API_URL}/api/landscaping/quote/${quoteId}/pdf`, {
+                headers: {
+                    'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+                }
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                // Criar FormData para envio
+                const formData = new FormData();
+                formData.append('phone_number', client.phone_number);
+                formData.append('file', blob, `Orcamento_${quoteId}.pdf`);
+                formData.append('filename', `Orçamento #${quoteId}.pdf`);
+                
+                // Enviar via WhatsApp
+                return fetch(`${API_URL}/api/whatsapp/sendFile`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+                    }
+                });
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Orçamento enviado via WhatsApp com sucesso!');
+                } else {
+                    alert(`Erro ao enviar: ${result.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao enviar orçamento:', error);
+                alert('Erro ao enviar orçamento via WhatsApp.');
+            });
+        },
+        error: function() {
+            alert('Erro ao obter dados do cliente.');
+        }
+    });
+}
+
+// Função para configurar busca rápida de clientes com search dropdown
 function setupClientSearch(selectedClientId = null) {
+    const clientDropdown = $('#add-quote-form select[name="client_id"]');
+    
+    // Limpar dropdown antes de reconfigurar
+    clientDropdown.dropdown('destroy');
+    
+    // Configurar dropdown com busca
+    clientDropdown.dropdown({
+        fullTextSearch: true,
+        filterRemoteData: false,
+        saveRemoteData: false,
+        minCharacters: 1,
+        searchDelay: 300,
+        placeholder: 'Selecione ou busque um cliente',
+        message: {
+            noResults: 'Nenhum cliente encontrado'
+        }
+    });
+    
+    // Carregar todos os clientes inicialmente
     loadClientsForQuotes();
     
     if (selectedClientId) {
         setTimeout(function() {
-            $('#add-quote-form select[name="client_id"]').dropdown('set selected', selectedClientId);
+            clientDropdown.dropdown('set selected', selectedClientId);
         }, 500);
     }
 }
 
 // Função para carregar clientes para o dropdown de orçamentos
 function loadClientsForQuotes() {
-    $.ajax({
-        url: `${API_URL}/api/landscaping/client`,
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
-        },
-        success: function(response) {
-            const clientSelect = $('#quote-client-filter, [name="client_id"]');
-            clientSelect.find('option:not(:first)').remove();
-            
-            if (response && response.items && response.items.length > 0) {
-                response.items.forEach(function(client) {
-                    clientSelect.append(`<option value="${client.id}">${client.client_name}</option>`);
-                });
+    const clientSelect = $('#quote-client-filter, [name="client_id"]');
+    clientSelect.find('option:not(:first)').remove();
+    
+    function loadPage(page = 1, allClients = []) {
+        $.ajax({
+            url: `${API_URL}/api/landscaping/client?page=${page}&page_size=100`,
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+            },
+            success: function(response) {
+                if (response && response.items) {
+                    allClients = allClients.concat(response.items);
+                    
+                    // Se há mais páginas, carregar a próxima
+                    if (page < response.total_pages) {
+                        loadPage(page + 1, allClients);
+                    } else {
+                        // Todas as páginas carregadas, popular dropdown
+                        allClients.forEach(function(client) {
+                            clientSelect.append(`<option value="${client.id}">${client.client_name}</option>`);
+                        });
+                        $('.ui.dropdown').dropdown('refresh');
+                    }
+                }
+            },
+            error: function(error) {
+                console.error('Erro ao carregar clientes:', error);
             }
-            
-            $('.ui.dropdown').dropdown('refresh');
-        },
-        error: function(error) {
-            console.error('Erro ao carregar clientes:', error);
-        }
-    });
+        });
+    }
+    
+    loadPage();
 }
 

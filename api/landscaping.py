@@ -203,6 +203,8 @@ class ClientBase(BaseModel):
     last_interaction_date: Optional[str] = None
     next_follow_up_date: Optional[str] = None
     notes: Optional[str] = None
+    id_whatsapp: Optional[str] = None
+    img_profile: Optional[str] = None
 
 class ClientCreate(ClientBase):
     pass
@@ -222,11 +224,11 @@ class ClientUpdate(BaseModel):
     last_interaction_date: Optional[str] = None
     next_follow_up_date: Optional[str] = None
     notes: Optional[str] = None
+    id_whatsapp: Optional[str] = None
     img_profile: Optional[str] = None
 
 class ClientResponse(ClientBase):
     id: int
-    img_profile: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -1221,7 +1223,7 @@ async def get_all_clients_endpoint(
         # Obter registros paginados
         items = get_all_clients(filters, page, page_size)
         
-        # Converter campos datetime para string
+        # Converter campos datetime para string e garantir que id_whatsapp e img_profile sejam retornados
         for item in items:
             if "created_at" in item and isinstance(item["created_at"], datetime):
                 item["created_at"] = item["created_at"].isoformat()
@@ -1231,6 +1233,11 @@ async def get_all_clients_endpoint(
                 item["last_interaction_date"] = item["last_interaction_date"].isoformat()
             if "next_follow_up_date" in item and isinstance(item["next_follow_up_date"], date):
                 item["next_follow_up_date"] = item["next_follow_up_date"].isoformat()
+            # Garantir que campos WhatsApp sejam incluídos
+            if "id_whatsapp" not in item:
+                item["id_whatsapp"] = None
+            if "img_profile" not in item:
+                item["img_profile"] = None
         
         return {
             "items": items,
@@ -1252,7 +1259,7 @@ async def get_client_endpoint(client_id: int = Path(..., description="ID do clie
         if not result:
             raise HTTPException(status_code=404, detail=f"Cliente com ID {client_id} não encontrado")
         
-        # Converter campos datetime para string
+        # Converter campos datetime para string e garantir que id_whatsapp e img_profile sejam retornados
         if "created_at" in result and isinstance(result["created_at"], datetime):
             result["created_at"] = result["created_at"].isoformat()
         if "updated_at" in result and isinstance(result["updated_at"], datetime):
@@ -1261,6 +1268,11 @@ async def get_client_endpoint(client_id: int = Path(..., description="ID do clie
             result["last_interaction_date"] = result["last_interaction_date"].isoformat()
         if "next_follow_up_date" in result and isinstance(result["next_follow_up_date"], date):
             result["next_follow_up_date"] = result["next_follow_up_date"].isoformat()
+        # Garantir que campos WhatsApp sejam incluídos
+        if "id_whatsapp" not in result:
+            result["id_whatsapp"] = None
+        if "img_profile" not in result:
+            result["img_profile"] = None
             
         return result
     except HTTPException:
@@ -1283,7 +1295,7 @@ async def update_client_endpoint(
         if not result:
             raise HTTPException(status_code=404, detail=f"Cliente com ID {client_id} não encontrado ou não pertence ao usuário")
         
-        # Converter campos datetime para string
+        # Converter campos datetime para string e garantir que id_whatsapp e img_profile sejam retornados
         if "created_at" in result and isinstance(result["created_at"], datetime):
             result["created_at"] = result["created_at"].isoformat()
         if "updated_at" in result and isinstance(result["updated_at"], datetime):
@@ -1292,6 +1304,11 @@ async def update_client_endpoint(
             result["last_interaction_date"] = result["last_interaction_date"].isoformat()
         if "next_follow_up_date" in result and isinstance(result["next_follow_up_date"], date):
             result["next_follow_up_date"] = result["next_follow_up_date"].isoformat()
+        # Garantir que campos WhatsApp sejam incluídos
+        if "id_whatsapp" not in result:
+            result["id_whatsapp"] = None
+        if "img_profile" not in result:
+            result["img_profile"] = None
             
         return result
     except HTTPException:

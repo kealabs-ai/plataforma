@@ -178,6 +178,78 @@ class MaintenanceResponse(MaintenanceBase):
     class Config:
         orm_mode = True
 
+# Modelos para Clientes de Paisagismo
+class ClientBase(BaseModel):
+    client_name: str = Field(..., description="Nome do cliente")
+    contact_person: Optional[str] = Field(None, description="Pessoa de contato")
+    email: Optional[str] = Field(None, description="Email do cliente")
+    phone_number: Optional[str] = Field(None, description="Número de telefone")
+    address: Optional[str] = Field(None, description="Endereço")
+    city: Optional[str] = Field(None, description="Cidade")
+    state: Optional[str] = Field(None, description="Estado")
+    zip_code: Optional[str] = Field(None, description="CEP")
+    client_type: Optional[str] = Field(None, description="Tipo do cliente")
+    industry: Optional[str] = Field(None, description="Setor/Indústria")
+    status: str = Field("Lead", description="Status do cliente")
+    last_interaction_date: Optional[date] = Field(None, description="Data da última interação")
+    next_follow_up_date: Optional[date] = Field(None, description="Data do próximo follow-up")
+    notes: Optional[str] = Field(None, description="Observações")
+    id_whatsapp: Optional[str] = Field(None, description="ID do WhatsApp")
+    img_profile: Optional[str] = Field(None, description="URL da imagem de perfil")
+
+class ClientCreate(BaseModel):
+    user_id: int = Field(..., description="ID do usuário")
+    client_name: str = Field(..., description="Nome do cliente")
+    contact_person: Optional[str] = Field(None, description="Pessoa de contato")
+    email: Optional[str] = Field(None, description="Email do cliente")
+    phone_number: Optional[str] = Field(None, description="Número de telefone")
+    address: Optional[str] = Field(None, description="Endereço")
+    city: Optional[str] = Field(None, description="Cidade")
+    state: Optional[str] = Field(None, description="Estado")
+    zip_code: Optional[str] = Field(None, description="CEP")
+    client_type: Optional[str] = Field(None, description="Tipo do cliente")
+    industry: Optional[str] = Field(None, description="Setor/Indústria")
+    status: str = Field("Lead", description="Status do cliente")
+    last_interaction_date: Optional[date] = Field(None, description="Data da última interação")
+    next_follow_up_date: Optional[date] = Field(None, description="Data do próximo follow-up")
+    notes: Optional[str] = Field(None, description="Observações")
+    id_whatsapp: Optional[str] = Field(None, description="ID do WhatsApp")
+    img_profile: Optional[str] = Field(None, description="URL da imagem de perfil")
+
+class ClientUpdate(BaseModel):
+    client_name: Optional[str] = Field(None, description="Nome do cliente")
+    contact_person: Optional[str] = Field(None, description="Pessoa de contato")
+    email: Optional[str] = Field(None, description="Email do cliente")
+    phone_number: Optional[str] = Field(None, description="Número de telefone")
+    address: Optional[str] = Field(None, description="Endereço")
+    city: Optional[str] = Field(None, description="Cidade")
+    state: Optional[str] = Field(None, description="Estado")
+    zip_code: Optional[str] = Field(None, description="CEP")
+    client_type: Optional[str] = Field(None, description="Tipo do cliente")
+    industry: Optional[str] = Field(None, description="Setor/Indústria")
+    status: Optional[str] = Field(None, description="Status do cliente")
+    last_interaction_date: Optional[date] = Field(None, description="Data da última interação")
+    next_follow_up_date: Optional[date] = Field(None, description="Data do próximo follow-up")
+    notes: Optional[str] = Field(None, description="Observações")
+    id_whatsapp: Optional[str] = Field(None, description="ID do WhatsApp")
+    img_profile: Optional[str] = Field(None, description="URL da imagem de perfil")
+
+class ClientResponse(ClientBase):
+    id: int
+    user_id: int
+    created_at: str
+    updated_at: str
+
+    class Config:
+        orm_mode = True
+
+class ClientPaginatedResponse(BaseModel):
+    items: List[ClientResponse]
+    page: int
+    page_size: int
+    total_items: int
+    total_pages: int
+
 # Modelo para respostas paginadas
 class PaginatedResponse(BaseModel):
     items: List[Dict[str, Any]]

@@ -1684,3 +1684,12 @@ def delete_quote_item(item_id: int, quote_id: int) -> bool:
     finally:
         cursor.close()
         conn.close()
+
+# Aliases para compatibilidade com whatsapp_integration.py
+def get_quote_by_id(quote_id: int) -> Optional[Dict[str, Any]]:
+    """Alias para get_quote - compatibilidade com whatsapp_integration.py"""
+    return get_quote(quote_id)
+
+def get_client_by_id(client_id: int) -> Optional[Dict[str, Any]]:
+    """Alias para get_client - compatibilidade com whatsapp_integration.py"""
+    return get_client(client_id)

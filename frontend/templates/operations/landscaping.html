@@ -926,8 +926,8 @@
             <div class="three fields">
                 <div class="field">
                     <label>Cliente</label>
-                    <select class="ui dropdown" name="client_id" required>
-                        <option value="">Selecione</option>
+                    <select class="ui search dropdown" name="client_id" required>
+                        <option value="">Selecione ou busque um cliente</option>
                         <!-- Opções serão carregadas via JavaScript -->
                     </select>
                 </div>
@@ -1050,6 +1050,7 @@
 <script src="{{ url_for('static', filename='js/landscaping_projects.js') }}"></script>
 <script src="{{ url_for('static', filename='js/landscaping_contacts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/landscaping_quotes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/landscaping_quotes_whatsapp.js') }}"></script>
 <script src="{{ url_for('static', filename='js/landscaping_services.js') }}"></script>
 <script src="{{ url_for('static', filename='js/landscaping_maintenance.js') }}"></script>
 {% endblock %}
