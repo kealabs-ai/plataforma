@@ -32,7 +32,7 @@ async def send_quote_pdf_whatsapp(
     quote_id: int = Form(..., description="ID do orçamento"),
     id_whatsapp: str = Form(..., description="ID do WhatsApp do destinatário")
 ):
-    """Gera PDF do orçamento e envia via WhatsApp"""
+    """Gera PDF do orçamento, retorna base64 e envia via WhatsApp"""
     try:
         # Buscar dados do orçamento
         quote = get_quote_by_id(quote_id)
@@ -46,40 +46,46 @@ async def send_quote_pdf_whatsapp(
         
         # Gerar PDF
         pdf_buffer = generate_quote_pdf(quote, client)
+        pdf_bytes = pdf_buffer.getvalue()
+        pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
         
-        # Preparar dados para envio
-        files = {
-            'file': (f"orcamento_{quote_id}.pdf", pdf_buffer.getvalue(), 'application/pdf')
-        }
-        alert("Enviando PDF do orçamento via WhatsApp2", files)
+        # Preparar body para envio via WAHA (usando modelo solicitado)
         data = {
-            'chatId': id_whatsapp,
-            'caption': f"Orçamento #{quote_id} - {client['client_name']}"
+            "session": "default",
+            "chatId": id_whatsapp,
+            "caption": f"Orçamento #{quote_id} - {client['client_name']}",
+            "file": {
+                "mimetype": "application/pdf",
+                "filename": f"orcamento_{quote_id}.pdf",
+                "base64": pdf_base64
+            }
         }
         
         # Enviar arquivo via WAHA
         response = requests.post(
             f"{WHATSAPP_API_BASE}/sendFile",
-            files=files,
-            data=data,
+            json=data,
             timeout=30
         )
         
         if response.status_code == 200:
             return {
                 "success": True,
-                "message": "PDF do orçamento enviado com sucesso."
+                "message": "PDF do orçamento enviado com sucesso.",
+                "pdf_base64": pdf_base64
             }
         else:
             return {
                 "success": False,
-                "message": f"Erro ao enviar PDF: {response.status_code}"
+                "message": f"Erro ao enviar PDF: {response.status_code} - {response.text}",
+                "pdf_base64": pdf_base64
             }
             
     except Exception as e:
         return {
             "success": False,
-            "message": f"Erro: {str(e)}"
+            "message": f"Erro: {str(e)}",
+            "pdf_base64": None
         }
 
 @router.post("/sendFile")
@@ -105,7 +111,7 @@ async def send_file_whatsapp(
             'chatId': f"{phone_number.replace('+', '').replace('-', '').replace(' ', '')}@c.us",
             'caption': f"Documento: {file_name}"
         }
-        
+        console.log(f"Enviando arquivo para {data['chatId']} com nome {file_name}")
         # Enviar arquivo via WAHA
         response = requests.post(
             f"{WHATSAPP_API_BASE}/sendFile",
