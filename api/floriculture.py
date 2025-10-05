@@ -95,6 +95,39 @@ class SupplierUpdate(BaseModel):
 class SupplierResponse(SupplierBase):
     id: int
 
+class PlantBase(BaseModel):
+    user_id: int = 1
+    name: str
+    scientific_name: Optional[str] = None
+    category: str
+    environment: str
+    sun_needs: str
+    watering: str
+    stock: int
+    price: float
+    image_url: Optional[str] = None
+    description: Optional[str] = None
+    care_instructions: Optional[str] = None
+
+class PlantCreate(PlantBase):
+    pass
+
+class PlantUpdate(BaseModel):
+    name: Optional[str] = None
+    scientific_name: Optional[str] = None
+    category: Optional[str] = None
+    environment: Optional[str] = None
+    sun_needs: Optional[str] = None
+    watering: Optional[str] = None
+    stock: Optional[int] = None
+    price: Optional[float] = None
+    image_url: Optional[str] = None
+    description: Optional[str] = None
+    care_instructions: Optional[str] = None
+
+class PlantResponse(PlantBase):
+    id: int
+
 class PaginatedResponse(BaseModel):
     items: List[Any]
     page: int
@@ -408,3 +441,133 @@ async def delete_supplier_endpoint(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao remover fornecedor: {str(e)}")
+
+# --- PLANT ENDPOINTS ---
+
+@router.post("/plant", response_model=PlantResponse)
+async def create_plant_endpoint(plant: PlantCreate = Body(...)):
+    """
+    Cria uma nova planta ornamental.
+    """
+    try:
+        # Log dos dados recebidos para debug
+        print(f"Dados recebidos para criar planta: {plant.dict()}")
+        
+        result = create_plant(
+            user_id=plant.user_id,
+            name=plant.name,
+            scientific_name=plant.scientific_name,
+            category=plant.category,
+            environment=plant.environment,
+            sun_needs=plant.sun_needs,
+            watering=plant.watering,
+            stock=plant.stock,
+            price=plant.price,
+            image_url=plant.image_url,
+            description=plant.description,
+            care_instructions=plant.care_instructions
+        )
+        if not result:
+            raise HTTPException(status_code=500, detail="Falha ao criar planta no banco de dados")
+        
+        # Converter Decimal para float para serialização JSON
+        if 'price' in result and result['price'] is not None:
+            result['price'] = float(result['price'])
+        
+        return result
+    except HTTPException as he:
+        print(f"HTTPException ao criar planta: {he.detail}")
+        raise he
+    except Exception as e:
+        print(f"Erro detalhado ao criar planta: {str(e)}")
+        print(f"Tipo do erro: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+@router.get("/plant", response_model=PaginatedResponse)
+async def get_all_plants_endpoint(
+    page: int = Query(1, ge=1, description="Página atual"),
+    page_size: int = Query(10, ge=1, le=100, description="Itens por página"),
+    user_id: Optional[int] = Query(None, description="ID do usuário"),
+    category: Optional[str] = Query(None, description="Categoria da planta"),
+    environment: Optional[str] = Query(None, description="Ambiente da planta")
+):
+    """
+    Obtém todas as plantas com filtros e paginação.
+    """
+    try:
+        filters = {
+            "user_id": user_id,
+            "category": category,
+            "environment": environment
+        }
+        filters = {k: v for k, v in filters.items() if v is not None}
+        
+        total_items = count_plants(filters)
+        total_pages = (total_items + page_size - 1) // page_size if total_items > 0 else 1
+        
+        items = get_all_plants(filters, page, page_size)
+        
+        return {
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao obter plantas: {str(e)}")
+
+@router.get("/plant/{plant_id}", response_model=PlantResponse)
+async def get_plant_endpoint(plant_id: int = Path(..., description="ID da planta")):
+    """
+    Obtém uma planta específica pelo ID.
+    """
+    try:
+        result = get_plant(plant_id)
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Planta com ID {plant_id} não encontrada")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao obter planta: {str(e)}")
+
+@router.put("/plant/{plant_id}", response_model=PlantResponse)
+async def update_plant_endpoint(
+    plant_id: int = Path(..., description="ID da planta"),
+    user_id: int = Query(1, description="ID do usuário"),
+    plant_data: PlantUpdate = Body(...)
+):
+    """
+    Atualiza uma planta.
+    """
+    try:
+        update_data = {k: v for k, v in plant_data.dict().items() if v is not None}
+        result = update_plant(plant_id, user_id, update_data)
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Planta com ID {plant_id} não encontrada")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar planta: {str(e)}")
+
+@router.delete("/plant/{plant_id}")
+async def delete_plant_endpoint(
+    plant_id: int = Path(..., description="ID da planta"),
+    user_id: int = Query(1, description="ID do usuário")
+):
+    """
+    Remove uma planta.
+    """
+    try:
+        success = delete_plant(plant_id, user_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Planta com ID {plant_id} não encontrada")
+        return {"message": f"Planta com ID {plant_id} removida com sucesso"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao remover planta: {str(e)}")

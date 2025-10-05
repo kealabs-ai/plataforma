@@ -60,8 +60,8 @@ from database_queries.milk_database_query import * # Importa a instância global
 
 # Inicializa a aplicação FastAPI
 app = FastAPI(
-    title="Kognia One API",
-    description="API para a plataforma Kognia One",
+    title="Kealabs Intelligence API",
+    description="API para a plataforma Kealabs Intelligence",
     version="1.0.0"
 )
 
@@ -176,6 +176,16 @@ async def serve_visitor():
 @app.get("/status")
 async def get_status():
     return {"status": "online", "version": "1.0.0", "message": "API is running correctly"}
+
+# Rota para resetar conexão do banco
+@app.post("/reset-db")
+async def reset_database_connection():
+    from data.connection import reset_connection_pool
+    try:
+        reset_connection_pool()
+        return {"status": "success", "message": "Pool de conexões resetado"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 # Mantém a rota de token na raiz para compatibilidade
 @app.post("/token")

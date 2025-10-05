@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Frontend - Flask
@@ -11,13 +11,13 @@ services:
     volumes:
       - ./frontend:/app
     environment:
-      - API_URL=http://api:8000
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
+      - API_URL=${API_URL:-http://api:8000}
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - FLASK_DEBUG=${FLASK_DEBUG:-1}
     depends_on:
       - api
     networks:
-      - kognia-network
+      - kealabs-network
     restart: unless-stopped
 
   # API - FastAPI
@@ -33,90 +33,31 @@ services:
       - ./llms:/app/llms
       - ./agents:/app/agents
     environment:
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=root_password
-      - DB_NAME=kognia_one_db
-      - API_PORT=8000
-      - APP_SECRET_KEY=your_app_secret_key
-      - DOCKER_ENV=true
-      - N8N_URL=http://n8n:5678
-      - N8N_API_KEY=
-    depends_on:
-      - db
-      - n8n
+      - DB_HOST=${DB_HOST:-72.60.140.128}
+      - DB_PORT=${DB_PORT:-2621}
+      - DB_USER=${DB_USER:-eden}
+      - DB_PASSWORD=${DB_PASSWORD:-eden2025@!}
+      - DB_NAME=${DB_NAME:-eden_db}
+      - API_PORT=${API_PORT:-8000}
+      - APP_SECRET_KEY=${APP_SECRET_KEY:-your_app_secret_key}
+      - DOCKER_ENV=${DOCKER_ENV:-true}
+    # depends_on removido - usando banco externo
     networks:
-      - kognia-network
+      - kealabs-network
     restart: unless-stopped
 
-  # Banco de dados MySQL
-  db:
-    image: mysql:5.7.44
-    ports:
-      - "3306:3306"
-    volumes:
-       - db_data:/var/lib/mysql
-       - ./init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
-       - ./init-n8n-db.sql:/docker-entrypoint-initdb.d/02-init-n8n-db.sql
-    environment:
-      - MYSQL_ROOT_PASSWORD=root_password
-      - MYSQL_DATABASE=kognia_one_db
-      - MYSQL_INITDB_SKIP_TZINFO=1
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --skip-character-set-client-handshake
-    networks:
-      - kognia-network
-    restart: unless-stopped
+  # Banco de dados MySQL (Externo - não precisa do container)
+  # Usando banco externo: mysql://eden:eden2025@!@72.60.140.128:2621/eden_db
 
-  # n8n - Workflow Automation
-  n8n:
-    image: n8nio/n8n:1.17.1
-    ports:
-      - "5678:5678"
-    environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=admin123
-      - DB_TYPE=mysqldb
-      - DB_MYSQLDB_HOST=db
-      - DB_MYSQLDB_PORT=3306
-      - DB_MYSQLDB_DATABASE=n8n_db
-      - DB_MYSQLDB_USER=root
-      - DB_MYSQLDB_PASSWORD=root_password
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://localhost:5678/
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-    volumes:
-      - n8n-data:/home/node/.n8n
-    depends_on:
-      - db
-    networks:
-      - kognia-network
-    restart: unless-stopped
 
-  # WAHA - WhatsApp HTTP API
-  waha:
-    image: devlikeapro/waha
-    ports:
-      - "3000:3000"
-    environment:
-      - WHATSAPP_HOOK_URL=http://api:8000/webhook/whatsapp
-      - WHATSAPP_HOOK_EVENTS=message,session.status
-    volumes:
-      - waha-data:/app/.sessions
-    networks:
-      - kognia-network
-    restart: unless-stopped
-    depends_on:
-      - api
+
+
 
 networks:
-  kognia-network:
+  kealabs-network:
     driver: bridge
 
-volumes:
-  db_data:
-  n8n-data:
-  waha-data:
+# volumes removidos - usando banco externo
+# volumes:
+#   db_data:
+

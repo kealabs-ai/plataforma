@@ -525,3 +525,228 @@ def delete_supplier(supplier_id: int, user_id: int) -> bool:
     finally:
         cursor.close()
         conn.close()
+
+# ------------------- PLANTS -------------------
+
+def create_plant(
+    user_id: int,
+    name: str,
+    scientific_name: Optional[str],
+    category: str,
+    environment: str,
+    sun_needs: str,
+    watering: str,
+    stock: int,
+    price: float,
+    image_url: Optional[str] = None,
+    description: Optional[str] = None,
+    care_instructions: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Cria uma nova planta ornamental.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        print(f"Tentando criar planta: {name} para usuário {user_id}")
+        
+        # Verificar se a tabela existe
+        cursor.execute("SHOW TABLES LIKE 'floriculture_plants'")
+        table_exists = cursor.fetchone()
+        if not table_exists:
+            print("Tabela floriculture_plants não existe! Criando...")
+            # Criar a tabela se não existir
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS floriculture_plants (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL DEFAULT 1,
+                    name VARCHAR(100) NOT NULL,
+                    scientific_name VARCHAR(100),
+                    category VARCHAR(50) NOT NULL,
+                    environment VARCHAR(50) NOT NULL,
+                    sun_needs VARCHAR(50) NOT NULL,
+                    watering VARCHAR(50) NOT NULL,
+                    stock INT NOT NULL DEFAULT 0,
+                    price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                    image_url TEXT,
+                    description TEXT,
+                    care_instructions TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            """)
+            conn.commit()
+            print("Tabela floriculture_plants criada com sucesso")
+        
+        cursor.execute("""
+            INSERT INTO floriculture_plants (
+                user_id, name, scientific_name, category, environment, sun_needs,
+                watering, stock, price, image_url, description, care_instructions
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            user_id, name, scientific_name, category, environment, sun_needs,
+            watering, stock, price, image_url, description, care_instructions
+        ))
+        conn.commit()
+        plant_id = cursor.lastrowid
+        print(f"Planta criada com ID: {plant_id}")
+        
+        cursor.execute("SELECT * FROM floriculture_plants WHERE id = %s", (plant_id,))
+        result = cursor.fetchone()
+        print(f"Planta recuperada: {result}")
+        return result
+    except Exception as e:
+        print(f"Erro detalhado ao criar planta: {str(e)}")
+        print(f"Tipo do erro: {type(e)}")
+        conn.rollback()
+        return None  # Retornar None em caso de erro
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_all_plants(
+    filters: Dict[str, Any],
+    page: int = 1,
+    page_size: int = 10
+) -> List[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # Verificar se a tabela existe
+        cursor.execute("SHOW TABLES LIKE 'floriculture_plants'")
+        table_exists = cursor.fetchone()
+        if not table_exists:
+            print("Tabela floriculture_plants não existe, retornando lista vazia")
+            return []
+        
+        query = "SELECT * FROM floriculture_plants WHERE 1=1"
+        params = []
+        
+        if "user_id" in filters:
+            query += " AND user_id = %s"
+            params.append(filters["user_id"])
+        
+        if "category" in filters:
+            query += " AND category = %s"
+            params.append(filters["category"])
+        
+        if "environment" in filters:
+            query += " AND environment = %s"
+            params.append(filters["environment"])
+        
+        query += " ORDER BY name LIMIT %s OFFSET %s"
+        offset = (page - 1) * page_size
+        params.extend([page_size, offset])
+        
+        cursor.execute(query, params)
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"Erro ao obter plantas: {str(e)}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def count_plants(filters: Dict[str, Any]) -> int:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Verificar se a tabela existe
+        cursor.execute("SHOW TABLES LIKE 'floriculture_plants'")
+        table_exists = cursor.fetchone()
+        if not table_exists:
+            print("Tabela floriculture_plants não existe, retornando 0")
+            return 0
+        
+        query = "SELECT COUNT(*) FROM floriculture_plants WHERE 1=1"
+        params = []
+        
+        if "user_id" in filters:
+            query += " AND user_id = %s"
+            params.append(filters["user_id"])
+        
+        if "category" in filters:
+            query += " AND category = %s"
+            params.append(filters["category"])
+        
+        if "environment" in filters:
+            query += " AND environment = %s"
+            params.append(filters["environment"])
+        
+        cursor.execute(query, params)
+        return cursor.fetchone()[0]
+    except Exception as e:
+        print(f"Erro ao contar plantas: {str(e)}")
+        return 0
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_plant(plant_id: int) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        cursor.execute("SELECT * FROM floriculture_plants WHERE id = %s", (plant_id,))
+        return cursor.fetchone()
+    except Exception as e:
+        print(f"Erro ao obter planta: {str(e)}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def update_plant(
+    plant_id: int,
+    user_id: int,
+    update_data: Dict[str, Any]
+) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        if not update_data:
+            return get_plant(plant_id)
+        
+        query = "UPDATE floriculture_plants SET "
+        params = []
+        
+        for key, value in update_data.items():
+            query += f"{key} = %s, "
+            params.append(value)
+        
+        query = query[:-2] + " WHERE id = %s"
+        params.append(plant_id)
+        
+        cursor.execute(query, params)
+        conn.commit()
+        
+        if cursor.rowcount > 0:
+            return get_plant(plant_id)
+        return None
+    except Exception as e:
+        print(f"Erro ao atualizar planta: {str(e)}")
+        conn.rollback()
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
+def delete_plant(plant_id: int, user_id: int) -> bool:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("DELETE FROM floriculture_plants WHERE id = %s", (plant_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        print(f"Erro ao remover planta: {str(e)}")
+        conn.rollback()
+        return False
+    finally:
+        cursor.close()
+        conn.close()

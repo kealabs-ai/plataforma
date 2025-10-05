@@ -1,4 +1,4 @@
-# Kognia One
+# Kealabs Intelligence
 
 Plataforma integrada que utiliza múltiplos modelos de IA para fornecer soluções inteligentes e personalizadas.
 
@@ -14,15 +14,14 @@ Plataforma integrada que utiliza múltiplos modelos de IA para fornecer soluçõ
 - `backend/`: Módulos compartilhados do backend
 - `llms/`: Integrações com modelos de linguagem
 - `agents/`: Agentes inteligentes para automação
-- `n8n/`: Workflows de automação (n8n)
+
 
 ## Componentes
 
 - **Frontend**: Interface de usuário construída com Streamlit
 - **API**: Backend construído com FastAPI
 - **Database**: MySQL para armazenamento de dados
-- **Redis**: Cache e filas de mensagens
-- **n8n**: Plataforma de automação de workflows
+
 
 ## Como Iniciar
 
@@ -54,7 +53,7 @@ docker-compose up --build -d
 
 - Frontend: http://localhost:8501
 - API: http://localhost:8000
-- n8n: http://localhost:5678
+
 
 ## Parando a Aplicação
 
@@ -85,3 +84,21 @@ streamlit run app.py
 ## Variáveis de Ambiente
 
 As variáveis de ambiente estão definidas no arquivo `.env` na raiz do projeto.
+
+## CI/CD com Jenkins
+
+O projeto inclui um `Jenkinsfile` configurado para pipeline automatizado:
+
+### Configuração
+1. Criar Pipeline job no Jenkins
+2. Configurar SCM para o repositório
+3. Apontar para `Jenkinsfile` na raiz
+
+### Pipeline
+- **Build**: Docker Compose build
+- **Test**: Health checks nas APIs (8000, 8501)
+- **Deploy**: Automático na branch main
+
+### Portas Testadas
+- API: http://localhost:8000/status
+- Frontend: http://localhost:8501

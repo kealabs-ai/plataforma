@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     $('#add-quote-btn').on('click', function() {
-        $('#add-quote-modal').modal('show');
+        initializeQuoteModal();
     });
     
     // Carregar dados da API, com fallback para dados mockados
@@ -153,6 +153,27 @@ function formatDate(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
+}
+
+// Função para garantir que os serviços estejam carregados
+function ensureServicesLoaded() {
+    if (!window.availableServices) {
+        return $.ajax({
+            url: `${API_URL}/api/landscaping/service?page_size=1000`,
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+            },
+            success: function(response) {
+                window.availableServices = response.items || [];
+            },
+            error: function(error) {
+                console.error('Erro ao carregar serviços:', error);
+                window.availableServices = [];
+            }
+        });
+    }
+    return Promise.resolve();
 }
 
 // Configurar AJAX para lidar com CORS

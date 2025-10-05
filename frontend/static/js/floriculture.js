@@ -46,6 +46,26 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#total-value').val((unitPrice * quantity).toFixed(2));
     });
     
+    // Configurar evento de salvamento de planta
+    $('#save-plant-btn').on('click', function() {
+        savePlant();
+    });
+    
+    // Configurar evento de salvamento de fornecedor
+    $('#save-supplier-btn').on('click', function() {
+        saveSupplier();
+    });
+    
+    // Configurar evento de salvamento de cultivo
+    $('#save-cultivation-btn').on('click', function() {
+        saveCultivation();
+    });
+    
+    // Configurar evento de salvamento de venda
+    $('#save-sale-btn').on('click', function() {
+        saveSale();
+    });
+    
     // Carregar dados reais da API, com fallback para dados mockados
     loadDataFromAPI().catch(error => {
         console.error('Erro ao carregar dados da API, usando dados mockados:', error);
@@ -413,6 +433,171 @@ function initCharts() {
             }
         });
     }
+}
+
+// Função para salvar nova planta
+function savePlant() {
+    const formData = {};
+    $('#add-plant-form').serializeArray().forEach(function(item) {
+        formData[item.name] = item.value;
+    });
+    
+    // Converter valores numéricos
+    formData.stock = parseInt(formData.stock) || 0;
+    formData.price = parseFloat(formData.price) || 0;
+    
+    $.ajax({
+        url: `${API_URL}/api/floriculture/plant`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+        },
+        success: function(response) {
+            showMessage('Planta salva com sucesso!', 'success');
+            $('#add-plant-modal').modal('hide');
+            $('#add-plant-form')[0].reset();
+            loadDataFromAPI().catch(() => loadMockData());
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao salvar planta:', error);
+            showMessage('Erro ao salvar planta: ' + (xhr.responseText || error), 'error');
+        }
+    });
+}
+
+// Função para salvar fornecedor
+function saveSupplier() {
+    const formData = {};
+    $('#add-supplier-form').serializeArray().forEach(function(item) {
+        if (item.name === 'products') {
+            if (!formData[item.name]) formData[item.name] = [];
+            formData[item.name].push(item.value);
+        } else {
+            formData[item.name] = item.value;
+        }
+    });
+    
+    // Converter array de produtos em string
+    if (Array.isArray(formData.products)) {
+        formData.products = formData.products.join(', ');
+    }
+    
+    $.ajax({
+        url: `${API_URL}/api/floriculture/supplier`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+        },
+        success: function(response) {
+            showMessage('Fornecedor salvo com sucesso!', 'success');
+            $('#add-supplier-modal').modal('hide');
+            $('#add-supplier-form')[0].reset();
+            loadDataFromAPI().catch(() => loadMockData());
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao salvar fornecedor:', error);
+            showMessage('Erro ao salvar fornecedor: ' + (xhr.responseText || error), 'error');
+        }
+    });
+}
+
+// Função para salvar cultivo
+function saveCultivation() {
+    const formData = {};
+    $('#add-cultivation-form').serializeArray().forEach(function(item) {
+        formData[item.name] = item.value;
+    });
+    
+    // Converter valores numéricos
+    formData.plant_id = parseInt(formData.plant_id) || 0;
+    formData.quantity = parseInt(formData.quantity) || 0;
+    
+    $.ajax({
+        url: `${API_URL}/api/floriculture/cultivation`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+        },
+        success: function(response) {
+            showMessage('Cultivo registrado com sucesso!', 'success');
+            $('#add-cultivation-modal').modal('hide');
+            $('#add-cultivation-form')[0].reset();
+            loadDataFromAPI().catch(() => loadMockData());
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao registrar cultivo:', error);
+            showMessage('Erro ao registrar cultivo: ' + (xhr.responseText || error), 'error');
+        }
+    });
+}
+
+// Função para salvar venda
+function saveSale() {
+    const formData = {};
+    $('#add-sale-form').serializeArray().forEach(function(item) {
+        formData[item.name] = item.value;
+    });
+    
+    // Converter valores numéricos
+    formData.plant_id = parseInt(formData.plant_id) || 0;
+    formData.quantity = parseInt(formData.quantity) || 0;
+    formData.unit_price = parseFloat(formData.unit_price) || 0;
+    formData.total_value = parseFloat(formData.total_value) || 0;
+    
+    $.ajax({
+        url: `${API_URL}/api/floriculture/sale`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+        },
+        success: function(response) {
+            showMessage('Venda registrada com sucesso!', 'success');
+            $('#add-sale-modal').modal('hide');
+            $('#add-sale-form')[0].reset();
+            loadDataFromAPI().catch(() => loadMockData());
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao registrar venda:', error);
+            showMessage('Erro ao registrar venda: ' + (xhr.responseText || error), 'error');
+        }
+    });
+}
+
+// Função para exibir mensagens
+function showMessage(message, type) {
+    const messageClass = type === 'success' ? 'positive' : 'negative';
+    const icon = type === 'success' ? 'check circle' : 'exclamation triangle';
+    
+    $('body').append(`
+        <div class="ui ${messageClass} message" style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+            <i class="close icon"></i>
+            <i class="${icon} icon"></i>
+            <div class="content">
+                <div class="header">${type === 'success' ? 'Sucesso' : 'Erro'}</div>
+                <p>${message}</p>
+            </div>
+        </div>
+    `);
+    
+    // Configurar botão de fechar
+    $('.ui.message .close').on('click', function() {
+        $(this).closest('.message').transition('fade');
+    });
+    
+    // Auto-remover após 5 segundos
+    setTimeout(function() {
+        $('.ui.message').fadeOut(function() {
+            $(this).remove();
+        });
+    }, 5000);
 }
 
 // Função auxiliar para formatar datas

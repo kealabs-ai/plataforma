@@ -355,34 +355,8 @@ function editQuote(id) {
                                 $row.find('.service-select .menu').append(option);
                             });
                             
-                            $row.find('.service-select').dropdown({
-                                onChange: function(value, text, $selectedItem) {
-                                    const $dropdown = $(this);
-                                    const $row = $dropdown.closest('tr');
-                                    const priceInput = $row.find('.price-input');
-                                    const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
-                                    priceInput.val(selectedPrice.toFixed(2));
-                                    const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
-                                    $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
-                                    calculateQuoteTotal();
-                                }
-                            });
-                            
-                            // Configurar eventos para inputs de quantidade e preço
-                            $row.find('.quantity-input, .price-input').on('input', function() {
-                                const quantity = parseFloat($row.find('.quantity-input').val()) || 0;
-                                const price = parseFloat($row.find('.price-input').val()) || 0;
-                                $row.find('.subtotal-input').val((quantity * price).toFixed(2));
-                                calculateQuoteTotal();
-                            });
-                            
-                            // Configurar evento para remover linha
-                            $row.find('.remove-item').on('click', function() {
-                                if ($('#tableBody tr').length > 1) {
-                                    $(this).closest('tr').remove();
-                                    calculateQuoteTotal();
-                                }
-                            });
+                            // Inicializar dropdown usando a nova função
+                            initializeServiceDropdown($row);
                             
                             $row.find('.service-select').dropdown('set selected', item.service_id);
                         });
@@ -411,10 +385,13 @@ function editQuote(id) {
                     // Configurar busca rápida de clientes
                     setupClientSearch(quote.client_id);
                     
+                    // Armazenar serviços globalmente para uso no modal
+                    window.availableServices = services;
+                    
                     // Configurar botão de adicionar item no modal de edição
                     $('#add-quote-item').off('click').on('click', function(e) {
                         e.preventDefault();
-                        addQuoteItemRow(services);
+                        addNewQuoteItem();
                         return false;
                     });
                     
@@ -585,111 +562,17 @@ function calculateQuoteTotal() {
     $('#quote-total-value').val(grandTotal.toFixed(2));
 }
 
-// Inicializar os dropdowns e configurar eventos
+// Função mantida para compatibilidade com edição
 function setupQuoteItemEvents() {
-    $('.service-select').dropdown({
-        onChange: function(value, text, $selectedItem) {
-            const $dropdown = $(this);
-            const $row = $dropdown.closest('tr');
-            const priceInput = $row.find('.price-input');
-            
-            const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
-            priceInput.val(selectedPrice.toFixed(2));
-            
-            const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
-            $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
-            
-            calculateQuoteTotal();
-        }
-    });
-    
-    $('#tableBody').on('input', '.quantity-input, .price-input', function() {
-        const $row = $(this).closest('tr');
-        const quantity = parseFloat($row.find('.quantity-input').val()) || 0;
-        const price = parseFloat($row.find('.price-input').val()) || 0;
-        $row.find('.subtotal-input').val((quantity * price).toFixed(2));
-        calculateQuoteTotal();
-    });
-    
-    $('#tableBody').on('click', '.remove-item', function() {
-        if ($('#tableBody tr').length > 1) {
-            $(this).closest('tr').remove();
-            calculateQuoteTotal();
-        }
-    });
+    // Eventos já configurados individualmente em cada linha
+    // Esta função é mantida para compatibilidade
 }
 
-// Adicionar item ao orçamento
-$('#add-quote-item').on('click', function() {
-    const newItem = $('.quote-item').first().clone();
-    newItem.find('input').val('');
-    newItem.find('select').val('');
-    $('#quote-items').append(newItem);
-    $('.ui.dropdown').dropdown('refresh');
-    setupQuoteItemEvents();
-});
-
-// Configurar evento de desconto
-$('[name="discount"]').on('input', calculateQuoteTotal);
+// Eventos removidos para evitar conflitos - agora gerenciados pelo landscaping_quotes_modal.js
 
 
 
-// Função para adicionar nova linha de item no orçamento
-function addQuoteItemRow(services) {
-    const newRowHtml = `
-        <tr>
-            <td>
-                <div class="ui selection dropdown service-select">
-                    <input type="hidden" name="service_id">
-                    <i class="dropdown icon"></i>
-                    <div class="default text">Selecione</div>
-                    <div class="menu"></div>
-                </div>
-            </td>
-            <td><div class="ui input"><input type="number" class="quantity-input" value="1" min="1"></div></td>
-            <td><div class="ui input"><input type="number" step="0.01" class="price-input" value="0.00"></div></td>
-            <td><div class="ui input"><input type="number" step="0.01" class="subtotal-input" readonly value="0.00"></div></td>
-            <td class="center aligned"><button type="button" class="ui icon red mini button remove-item"><i class="trash icon"></i></button></td>
-        </tr>
-    `;
-    
-    $('#tableBody').append(newRowHtml);
-    const $newRow = $('#tableBody tr').last();
-    
-    services.forEach(function(service) {
-        const option = `<div class="item" data-value="${service.id}" data-price="${service.base_price}">${service.service_name}</div>`;
-        $newRow.find('.service-select .menu').append(option);
-    });
-    
-    $newRow.find('.service-select').dropdown({
-        onChange: function(value, text, $selectedItem) {
-            const $dropdown = $(this);
-            const $row = $dropdown.closest('tr');
-            const priceInput = $row.find('.price-input');
-            const selectedPrice = parseFloat($selectedItem.data('price')) || 0;
-            priceInput.val(selectedPrice.toFixed(2));
-            const quantity = parseFloat($row.find('.quantity-input').val()) || 1;
-            $row.find('.subtotal-input').val((quantity * selectedPrice).toFixed(2));
-            calculateQuoteTotal();
-        }
-    });
-    
-    $newRow.find('.quantity-input, .price-input').on('input', function() {
-        const quantity = parseFloat($newRow.find('.quantity-input').val()) || 0;
-        const price = parseFloat($newRow.find('.price-input').val()) || 0;
-        $newRow.find('.subtotal-input').val((quantity * price).toFixed(2));
-        calculateQuoteTotal();
-    });
-    
-    $newRow.find('.remove-item').on('click', function() {
-        if ($('#tableBody tr').length > 1) {
-            $newRow.remove();
-            calculateQuoteTotal();
-        }
-    });
-    
-    calculateQuoteTotal();
-}
+// Função removida - agora é gerenciada pelo landscaping_quotes_modal.js
 
 // Função para enviar orçamento via WhatsApp
 function sendQuoteWhatsApp(quoteId, clientId) {
@@ -750,68 +633,37 @@ function sendQuoteWhatsApp(quoteId, clientId) {
 
 // Função para configurar busca rápida de clientes com search dropdown
 function setupClientSearch(selectedClientId = null) {
-    const clientDropdown = $('#add-quote-form select[name="client_id"]');
-    
-    // Limpar dropdown antes de reconfigurar
-    clientDropdown.dropdown('destroy');
-    
-    // Configurar dropdown com busca
-    clientDropdown.dropdown({
-        fullTextSearch: true,
-        filterRemoteData: false,
-        saveRemoteData: false,
-        minCharacters: 1,
-        searchDelay: 300,
-        placeholder: 'Selecione ou busque um cliente',
-        message: {
-            noResults: 'Nenhum cliente encontrado'
-        }
-    });
-    
-    // Carregar todos os clientes inicialmente
-    loadClientsForQuotes();
+    setupClientDropdown();
     
     if (selectedClientId) {
         setTimeout(function() {
-            clientDropdown.dropdown('set selected', selectedClientId);
+            $('#add-quote-form select[name="client_id"]').dropdown('set selected', selectedClientId);
         }, 500);
     }
 }
 
 // Função para carregar clientes para o dropdown de orçamentos
 function loadClientsForQuotes() {
-    const clientSelect = $('#quote-client-filter, [name="client_id"]');
+    const clientSelect = $('[name="client_id"]');
     clientSelect.find('option:not(:first)').remove();
     
-    function loadPage(page = 1, allClients = []) {
-        $.ajax({
-            url: `${API_URL}/api/landscaping/client?page=${page}&page_size=100`,
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
-            },
-            success: function(response) {
-                if (response && response.items) {
-                    allClients = allClients.concat(response.items);
-                    
-                    // Se há mais páginas, carregar a próxima
-                    if (page < response.total_pages) {
-                        loadPage(page + 1, allClients);
-                    } else {
-                        // Todas as páginas carregadas, popular dropdown
-                        allClients.forEach(function(client) {
-                            clientSelect.append(`<option value="${client.id}">${client.client_name}</option>`);
-                        });
-                        $('.ui.dropdown').dropdown('refresh');
-                    }
-                }
-            },
-            error: function(error) {
-                console.error('Erro ao carregar clientes:', error);
+    $.ajax({
+        url: `${API_URL}/api/landscaping/client`,
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || 'dummy_token')
+        },
+        success: function(response) {
+            if (response && response.items) {
+                response.items.forEach(function(client) {
+                    clientSelect.append(`<option value="${client.id}">${client.client_name}</option>`);
+                });
+                $('.ui.dropdown').dropdown('refresh');
             }
-        });
-    }
-    
-    loadPage();
+        },
+        error: function(error) {
+            console.error('Erro ao carregar clientes:', error);
+        }
+    });
 }
 

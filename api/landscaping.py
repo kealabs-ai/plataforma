@@ -1197,7 +1197,7 @@ async def create_client_endpoint(client: ClientCreate = Body(...)):
 @router.get("/client", response_model=ClientPaginatedResponse)
 async def get_all_clients_endpoint(
     page: int = Query(1, ge=1, description="Página atual"),
-    page_size: int = Query(10, ge=1, le=100, description="Itens por página"),
+    page_size: int = Query(100, ge=1, le=100, description="Itens por página"),
     user_id: Optional[int] = Query(None, description="ID do usuário"),
     status: Optional[str] = Query(None, description="Status do cliente"),
     client_name: Optional[str] = Query(None, description="Nome do cliente"),
@@ -1315,6 +1315,42 @@ async def update_client_endpoint(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar cliente: {str(e)}")
+
+@router.get("/client/search")
+async def search_clients_endpoint(
+    q: str = Query(..., description="Termo de busca"),
+    limit: int = Query(20, ge=1, le=100, description="Limite de resultados")
+):
+    """
+    Busca clientes por nome com limite de resultados.
+    """
+    try:
+        filters = {"client_name": q}
+        items = get_all_clients(filters, 1, limit)
+        
+        for item in items:
+            if "created_at" in item and isinstance(item["created_at"], datetime):
+                item["created_at"] = item["created_at"].isoformat()
+            if "updated_at" in item and isinstance(item["updated_at"], datetime):
+                item["updated_at"] = item["updated_at"].isoformat()
+            if "last_interaction_date" in item and isinstance(item["last_interaction_date"], date):
+                item["last_interaction_date"] = item["last_interaction_date"].isoformat()
+            if "next_follow_up_date" in item and isinstance(item["next_follow_up_date"], date):
+                item["next_follow_up_date"] = item["next_follow_up_date"].isoformat()
+            if "id_whatsapp" not in item:
+                item["id_whatsapp"] = None
+            if "img_profile" not in item:
+                item["img_profile"] = None
+        
+        return {
+            "items": items,
+            "page": 1,
+            "page_size": limit,
+            "total_items": len(items),
+            "total_pages": 1
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar clientes: {str(e)}")
 
 @router.delete("/client/{client_id}")
 async def delete_client_endpoint(

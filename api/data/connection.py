@@ -29,8 +29,9 @@ def initialize_connection_pool():
     global connection_pool
     if connection_pool is None:
         try:
+            print(f"Inicializando pool com configurações: {DB_CONFIG}")
             connection_pool = pooling.MySQLConnectionPool(
-                pool_name="kognia_pool",
+                pool_name="kealabs_pool",
                 pool_size=5,
                 **DB_CONFIG
             )
@@ -63,3 +64,11 @@ def close_all_connections():
     if connection_pool:
         connection_pool = None
         print("Pool de conexões fechado.")
+
+def reset_connection_pool():
+    """
+    Força reinicialização do pool de conexões.
+    """
+    global connection_pool
+    connection_pool = None
+    initialize_connection_pool()
