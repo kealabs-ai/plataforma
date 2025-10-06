@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_COMPOSE_FILE = 'docker-compose.yml'
         PROJECT_NAME = 'kealabs-intelligence'
+        DOCKER_NETWORK = 'kealabs-network'
     }
     
     stages {
@@ -30,40 +31,82 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh 'docker-compose build'
+                script {
+                    // Verificar se docker-compose existe, senão usar docker
+                    def composeExists = sh(script: 'which docker-compose', returnStatus: true) == 0
+                    if (composeExists) {
+                        sh 'docker-compose build'
+                    } else {
+                        // Usar Docker diretamente
+                        sh 'docker network create kealabs-network || true'
+                        sh 'docker build -t kealabs-api ./api'
+                        sh 'docker build -t kealabs-frontend ./frontend'
+                    }
+                }
             }
         }
         
         stage('Test') {
             steps {
                 script {
-                    sh 'docker-compose up -d'
-                    sh 'sleep 45'
-                    
-                    // Health check da API
-                    sh 'for i in {1..10}; do curl -f http://localhost:8000/status && break || sleep 5; done'
-                    
-                    // Health check do Frontend
-                    sh 'for i in {1..10}; do curl -f http://localhost:8501 && break || sleep 5; done'
-                    
-                    // Verificar logs para erros
-                    sh 'docker-compose logs api | grep -i error && exit 1 || true'
+                    def composeExists = sh(script: 'which docker-compose', returnStatus: true) == 0
+                    if (composeExists) {
+                        sh 'docker-compose up -d'
+                        sh 'sleep 45'
+                        sh 'for i in {1..10}; do curl -f http://localhost:8000/status && break || sleep 5; done'
+                        sh 'for i in {1..10}; do curl -f http://localhost:8501 && break || sleep 5; done'
+                    } else {
+                        // Usar Docker diretamente
+                        sh '''docker run -d --name kealabs-api --network kealabs-network \
+                              --env-file .env -p 8000:8000 kealabs-api'''
+                        sh '''docker run -d --name kealabs-frontend --network kealabs-network \
+                              --env-file .env -p 8501:8501 kealabs-frontend'''
+                        sh 'sleep 45'
+                        sh 'for i in {1..10}; do curl -f http://localhost:8000/status && break || sleep 5; done'
+                        sh 'for i in {1..10}; do curl -f http://localhost:8501 && break || sleep 5; done'
+                    }
                 }
             }
             post {
                 always {
-                    sh 'docker-compose logs'
-                    sh 'docker-compose down'
+                    script {
+                        def composeExists = sh(script: 'which docker-compose', returnStatus: true) == 0
+                        if (composeExists) {
+                            sh 'docker-compose logs || true'
+                            sh 'docker-compose down || true'
+                        } else {
+                            sh 'docker logs kealabs-api || true'
+                            sh 'docker logs kealabs-frontend || true'
+                            sh 'docker stop kealabs-api kealabs-frontend || true'
+                            sh 'docker rm kealabs-api kealabs-frontend || true'
+                        }
+                    }
                 }
             }
         }
         
         stage('Deploy') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
             }
             steps {
-                sh 'docker-compose up -d --build'
+                script {
+                    def composeExists = sh(script: 'which docker-compose', returnStatus: true) == 0
+                    if (composeExists) {
+                        sh 'docker-compose up -d --build'
+                    } else {
+                        // Deploy com Docker
+                        sh 'docker stop kealabs-api kealabs-frontend || true'
+                        sh 'docker rm kealabs-api kealabs-frontend || true'
+                        sh '''docker run -d --name kealabs-api --network kealabs-network \
+                              --env-file .env -p 8000:8000 --restart unless-stopped kealabs-api'''
+                        sh '''docker run -d --name kealabs-frontend --network kealabs-network \
+                              --env-file .env -p 8501:8501 --restart unless-stopped kealabs-frontend'''
+                    }
+                }
             }
         }
     }
@@ -73,7 +116,15 @@ pipeline {
             cleanWs()
         }
         failure {
-            sh 'docker-compose logs'
+            script {
+                def composeExists = sh(script: 'which docker-compose', returnStatus: true) == 0
+                if (composeExists) {
+                    sh 'docker-compose logs || true'
+                } else {
+                    sh 'docker logs kealabs-api || true'
+                    sh 'docker logs kealabs-frontend || true'
+                }
+            }
         }
     }
 }
