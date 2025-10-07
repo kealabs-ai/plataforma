@@ -1,6 +1,14 @@
 pipeline {
-    // 1. Mudar o agente global para 'none'. Isso força a definição de um agente em cada stage.
-    agent none 
+    // 1. O agente global agora é um contêiner Docker (docker:dind), garantindo que 
+    // o cliente 'docker' esteja sempre disponível para todos os stages.
+    agent {
+        docker {
+            image 'docker:dind'
+            // IMPORTANTE: Mapeamos o socket do Docker do host para que o container do Jenkins
+            // possa executar comandos (build, run, network) no daemon Docker do host principal.
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    } 
 
     environment {
         DOCKER_COMPOSE_FILE = 'docker-compose.yml'
@@ -9,16 +17,14 @@ pipeline {
     }
 
     stages {
-        // Stages de preparação podem rodar em qualquer agente (o padrão do Jenkins)
+        // Agora rodando dentro do agente docker:dind
         stage('Checkout') {
-            agent any
             steps {
                 checkout scm
             }
         }
 
         stage('Environment Setup') {
-            agent any
             steps {
                 script {
                     if (fileExists('.env.example')) {
@@ -30,22 +36,10 @@ pipeline {
             }
         }
 
-        // 2. Stage de Build agora usa um agente Docker
+        // Stage de Build agora usa o agente global (docker:dind)
         stage('Build') {
-            agent {
-                docker {
-                    // Usamos uma imagem que já contém o cliente Docker
-                    image 'docker:dind'
-                    // IMPORTANT: Montamos o socket do Docker do host para que o container possa
-                    // se comunicar e executar comandos (build, run, network) no host principal.
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
-                }
-            }
             steps {
                 script {
-                    // O comando 'docker --version' não é mais necessário aqui.
-                    // Se o agente Docker falhar, o Jenkins já vai reportar o erro.
-                    
                     sh 'docker network create kealabs-network || true'
                     sh 'docker build -t kealabs-api ./api'
                     sh 'docker build -t kealabs-frontend ./frontend'
@@ -53,14 +47,8 @@ pipeline {
             }
         }
 
-        // 3. Stages de Deploy também usam o agente Docker
+        // Stages de Deploy também usam o agente global (docker:dind)
         stage('Deploy - Desenvolvimento') {
-            agent {
-                docker {
-                    image 'docker:dind'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
-                }
-            }
             when {
                 branch 'develop'
             }
@@ -79,12 +67,6 @@ pipeline {
         }
 
         stage('Deploy - Homologação') {
-            agent {
-                docker {
-                    image 'docker:dind'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
-                }
-            }
             when {
                 branch 'main'
             }
