@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:24.0.7-dind' // Use uma versão estável do Docker DinD
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
 
     environment {
         DOCKER_COMPOSE_FILE = 'docker-compose.yml'
@@ -27,9 +22,6 @@ pipeline {
                     } else if (!fileExists('.env')) {
                         error "Arquivo .env.example e .env não encontrados!"
                     }
-                    sh 'sed -i "s/DOCKER_ENV=false/DOCKER_ENV=true/g" .env || true'
-                    sh 'sed -i "s/FLASK_ENV=development/FLASK_ENV=production/g" .env || true'
-                    sh 'sed -i "s/FLASK_DEBUG=1/FLASK_DEBUG=0/g" .env || true'
                 }
             }
         }
@@ -45,38 +37,38 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Deploy - Desenvolvimento') {
+            when {
+                branch 'develop'
+            }
             steps {
                 script {
-                    sh 'docker stop kealabs-api kealabs-frontend || true'
-                    sh 'docker rm kealabs-api kealabs-frontend || true'
-                    sh '''docker run -d --name kealabs-api --network kealabs-network \
-                        --env-file .env -p 8000:8000 kealabs-api'''
-                    sleep 30
-                    sh 'curl -f http://localhost:8000/status || (echo "API health check failed" && exit 1)'
-                    sh 'docker logs kealabs-api || true'
-                    sh 'docker stop kealabs-api || true'
-                    sh 'docker rm kealabs-api || true'
+                    sh 'cp .env.dev .env'
+                    sh 'docker stop kealabs-api-dev kealabs-frontend-dev || true'
+                    sh 'docker rm kealabs-api-dev kealabs-frontend-dev || true'
+                    sh '''docker run -d --name kealabs-api-dev --network kealabs-network \
+                        --env-file .env -p 8001:8000 --restart unless-stopped kealabs-api'''
+                    sh '''docker run -d --name kealabs-frontend-dev --network kealabs-network \
+                        --env-file .env -p 8502:8501 --restart unless-stopped kealabs-frontend'''
+                    echo "Deploy de desenvolvimento concluído!"
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy - Homologação') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'develop'
-                }
+                branch 'main'
             }
             steps {
                 script {
-                    sh 'docker stop kealabs-api kealabs-frontend || true'
-                    sh 'docker rm kealabs-api kealabs-frontend || true'
-                    sh '''docker run -d --name kealabs-api --network kealabs-network \
+                    sh 'cp .env.homolog .env'
+                    sh 'docker stop kealabs-api-homolog kealabs-frontend-homolog || true'
+                    sh 'docker rm kealabs-api-homolog kealabs-frontend-homolog || true'
+                    sh '''docker run -d --name kealabs-api-homolog --network kealabs-network \
                         --env-file .env -p 8000:8000 --restart unless-stopped kealabs-api'''
-                    sh '''docker run -d --name kealabs-frontend --network kealabs-network \
+                    sh '''docker run -d --name kealabs-frontend-homolog --network kealabs-network \
                         --env-file .env -p 8501:8501 --restart unless-stopped kealabs-frontend'''
-                    echo "Deploy concluído com sucesso"
+                    echo "Deploy de homologação concluído!"
                 }
             }
         }
