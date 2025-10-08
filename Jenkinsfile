@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'docker:latest' // Usa imagem com Docker CLI
+            image 'kealabs/jenkins-agent:latest' // Imagem personalizada com Docker CLI e Git
             args '-v /var/run/docker.sock:/var/run/docker.sock --privileged'
         }
     }
@@ -13,6 +13,13 @@ pipeline {
     }
 
     stages {
+        stage('Verificar Ambiente') {
+            steps {
+                sh 'docker --version'
+                sh 'git --version'
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
