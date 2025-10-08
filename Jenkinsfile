@@ -1,14 +1,10 @@
 pipeline {
-    // 1. O agente global agora é um contêiner Docker (docker:dind), garantindo que 
-    // o cliente 'docker' esteja sempre disponível para todos os stages.
     agent {
         docker {
-            image 'docker:dind'
-            // IMPORTANTE: Mapeamos o socket do Docker do host para que o container do Jenkins
-            // possa executar comandos (build, run, network) no daemon Docker do host principal.
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            image 'docker:latest' // Usa imagem com Docker CLI
+            args '-v /var/run/docker.sock:/var/run/docker.sock --privileged'
         }
-    } 
+    }
 
     environment {
         DOCKER_COMPOSE_FILE = 'docker-compose.yml'
@@ -17,7 +13,6 @@ pipeline {
     }
 
     stages {
-        // Agora rodando dentro do agente docker:dind
         stage('Checkout') {
             steps {
                 checkout scm
@@ -36,7 +31,6 @@ pipeline {
             }
         }
 
-        // Stage de Build agora usa o agente global (docker:dind)
         stage('Build') {
             steps {
                 script {
@@ -47,7 +41,6 @@ pipeline {
             }
         }
 
-        // Stages de Deploy também usam o agente global (docker:dind)
         stage('Deploy - Desenvolvimento') {
             when {
                 branch 'develop'
