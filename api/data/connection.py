@@ -12,11 +12,14 @@ load_dotenv()
 
 # Configurações do banco de dados
 DB_CONFIG = {
-    'host': os.getenv("DB_HOST"),
-    'user': os.getenv("DB_USER"),
-    'password': os.getenv("DB_PASSWORD"),
-    'database': os.getenv("DB_NAME"),
-    'port': int(os.getenv("DB_PORT")),
+    'host': os.getenv("DB_HOST", "mysql_eden_jardins_eden_mysql"),
+    'user': os.getenv("DB_USER", "eden"),
+    'password': os.getenv("DB_PASSWORD", "eden2025@!"),
+    'database': os.getenv("DB_NAME", "eden_db"),
+    'port': int(os.getenv("DB_PORT", "3306")),
+    'charset': 'utf8mb4',
+    'collation': 'utf8mb4_unicode_ci',
+    'autocommit': True
 }
 
 # Pool de conexões
@@ -72,3 +75,18 @@ def reset_connection_pool():
     global connection_pool
     connection_pool = None
     initialize_connection_pool()
+
+def test_connection():
+    """
+    Testa a conexão com o banco de dados.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return True, "Conexão bem-sucedida"
+    except Exception as e:
+        return False, str(e)

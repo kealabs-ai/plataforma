@@ -187,6 +187,16 @@ async def reset_database_connection():
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+# Rota para testar conexão do banco
+@app.get("/test-db")
+async def test_database_connection():
+    from data.connection import test_connection
+    try:
+        success, message = test_connection()
+        return {"status": "success" if success else "error", "message": message}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 # Mantém a rota de token na raiz para compatibilidade
 @app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):

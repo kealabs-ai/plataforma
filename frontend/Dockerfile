@@ -25,8 +25,9 @@ EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8501 || exit 1
 
-# Set Python path
+# Set Python path and working directory
 ENV PYTHONPATH=/app
+WORKDIR /app
 
 # Start the application
-CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:8501", "--workers", "2", "--timeout", "120", "app_flask:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8501", "--workers", "2", "--timeout", "120", "--chdir", "/app", "wsgi:app"]
