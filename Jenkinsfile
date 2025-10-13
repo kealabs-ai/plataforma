@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'docker:20.10.24-cli' // Imagem oficial com Docker CLI funcional
+            image 'docker:20.10.24-cli'
             args '-v /var/run/docker.sock:/var/run/docker.sock --privileged'
         }
     }
@@ -11,6 +11,7 @@ pipeline {
         PROJECT_NAME = 'kealabs-intelligence'
         DOCKER_NETWORK = 'kealabs-network'
         DOCKER_CONFIG = "${env.WORKSPACE}/.docker"
+        HOSTINGER_URL = 'meuprojeto.hostinger.com' // Altere para seu domínio ou IP real
     }
 
     stages {
@@ -63,6 +64,8 @@ pipeline {
                     sh '''docker run -d --name kealabs-frontend-dev --network kealabs-network \
                         --env-file .env -p 8502:8501 --restart unless-stopped kealabs-frontend'''
                     echo "Deploy de desenvolvimento concluído!"
+                    echo "API disponível em: http://${HOSTINGER_URL}:8001"
+                    echo "Frontend disponível em: http://${HOSTINGER_URL}:8502"
                 }
             }
         }
@@ -81,6 +84,8 @@ pipeline {
                     sh '''docker run -d --name kealabs-frontend-homolog --network kealabs-network \
                         --env-file .env -p 8501:8501 --restart unless-stopped kealabs-frontend'''
                     echo "Deploy de homologação concluído!"
+                    echo "API disponível em: http://${HOSTINGER_URL}:8000"
+                    echo "Frontend disponível em: http://${HOSTINGER_URL}:8501"
                 }
             }
         }
