@@ -1,5 +1,5 @@
 # Imagem base com Python
-FROM python:3.11-slim
+FROM python:3.11.2
 
 # Troca para root para garantir permissões durante a instalação
 USER root
