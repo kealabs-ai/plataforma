@@ -64,8 +64,8 @@ pipeline {
                     sh '''docker run -d --name kealabs-frontend-dev --network kealabs-network \
                         --env-file .env -p 8502:8501 --restart unless-stopped kealabs-frontend'''
                     echo "Deploy de desenvolvimento concluído!"
-                    echo "API disponível em: http://${HOSTINGER_URL}:8001"
-                    echo "Frontend disponível em: http://${HOSTINGER_URL}:8502"
+                    echo "Acesse a API em: https://${HOSTINGER_URL}:8001"
+                    echo "Acesse o Frontend em: https://${HOSTINGER_URL}:8502"
                 }
             }
         }
@@ -84,8 +84,8 @@ pipeline {
                     sh '''docker run -d --name kealabs-frontend-homolog --network kealabs-network \
                         --env-file .env -p 8501:8501 --restart unless-stopped kealabs-frontend'''
                     echo "Deploy de homologação concluído!"
-                    echo "API disponível em: http://${HOSTINGER_URL}:8000"
-                    echo "Frontend disponível em: http://${HOSTINGER_URL}:8501"
+                    echo "Acesse a API em: https://${HOSTINGER_URL}:8000"
+                    echo "Acesse o Frontend em: https://${HOSTINGER_URL}:8501"
                 }
             }
         }
