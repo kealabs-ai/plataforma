@@ -1,4 +1,4 @@
-FROM python:3.11.2
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -25,9 +25,8 @@ EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8501 || exit 1
 
-# Set Python path and working directory
+# Set environment variables
 ENV PYTHONPATH=/app
-WORKDIR /app
 
-# Start the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8501", "--workers", "2", "--timeout", "120", "--chdir", "/app", "wsgi:app"]
+# Start the application with Streamlit
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]

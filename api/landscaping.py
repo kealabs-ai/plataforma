@@ -13,6 +13,12 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+# Endpoint de teste para verificar conectividade
+@router.get("/test")
+async def test_endpoint():
+    """Endpoint de teste para verificar se a API está funcionando."""
+    return {"status": "ok", "message": "Landscaping API is working"}
+
 # Pydantic models for request/response
 class ProjectBase(BaseModel):
     user_id: int

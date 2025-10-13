@@ -18,10 +18,13 @@ class MilkDatabaseQuery:
         """Conecta ao banco de dados MySQL"""
         try:
             self.connection = mysql.connector.connect(
-                host=os.getenv("DB_HOST"),
-                user=os.getenv("DB_USER"),
-                password=os.getenv("DB_PASSWORD"),
-                database=os.getenv("DB_NAME")
+                host=os.getenv("DB_HOST", "72.60.140.128"),
+                user=os.getenv("DB_USER", "eden"),
+                password=os.getenv("DB_PASSWORD", "eden2025@!"),
+                database=os.getenv("DB_NAME", "eden_db"),
+                port=int(os.getenv("DB_PORT", "2621")),
+                charset='utf8mb4',
+                autocommit=True
             )
             print("Conexão com o banco de dados estabelecida com sucesso")
         except Error as e:

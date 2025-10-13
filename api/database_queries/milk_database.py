@@ -88,13 +88,16 @@ class MilkDatabase:
     def __init__(self):
         """Inicializa a conexão com o banco de dados e cria as tabelas."""
         # Configuração da conexão com o banco de dados a partir de variáveis de ambiente
-        db_user = os.getenv("DB_USER")
-        db_password = os.getenv("DB_PASSWORD")
-        db_host = os.getenv("DB_HOST")
-        db_name = os.getenv("DB_NAME")
+        db_user = os.getenv("DB_USER", "eden")
+        db_password = os.getenv("DB_PASSWORD", "eden2025@!")
+        db_host = os.getenv("DB_HOST", "72.60.140.128")
+        db_name = os.getenv("DB_NAME", "eden_db")
 
+        # Configuração da porta
+        db_port = os.getenv("DB_PORT", "2621")
+        
         # Use o driver 'mysql+pymysql'
-        db_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
+        db_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?charset=utf8mb4"
         
         self.engine = create_engine(db_url, pool_pre_ping=True)
         

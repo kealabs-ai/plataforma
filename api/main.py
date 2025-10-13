@@ -30,7 +30,7 @@ try:
     from config import GOOGLE_GEMINI_API_KEY, API_PORT, DOCKER_ENV
 except ImportError:
     GOOGLE_GEMINI_API_KEY = os.getenv("GOOGLE_GEMINI_API_KEY")
-    API_PORT = int(os.getenv("API_PORT", 8501))
+    API_PORT = int(os.getenv("API_PORT", 8000))
     DOCKER_ENV = os.getenv("DOCKER_ENV", "false")
 
 # Importa módulos do backend
@@ -65,12 +65,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Inicializa conexão com banco de dados
+try:
+    from data.connection import initialize_connection_pool
+    initialize_connection_pool()
+    print("✓ Pool de conexões inicializado")
+except Exception as e:
+    print(f"⚠ Erro ao inicializar pool: {e}")
+
 # Configuração de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "http://localhost:8501", "http://localhost:8000", "http://localhost:3000"],  # Permite todas as origens para desenvolvimento
+    allow_origins=["*"],  # Permite todas as origens
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"]
 )
@@ -176,6 +184,11 @@ async def serve_visitor():
 @app.get("/status")
 async def get_status():
     return {"status": "online", "version": "1.0.0", "message": "API is running correctly"}
+
+# Rota de teste para CORS
+@app.get("/api/test")
+async def api_test():
+    return {"status": "ok", "message": "API test endpoint working", "cors": "enabled"}
 
 # Rota para resetar conexão do banco
 @app.post("/reset-db")

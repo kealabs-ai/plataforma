@@ -12,11 +12,11 @@ load_dotenv()
 
 # Configurações do banco de dados
 DB_CONFIG = {
-    'host': os.getenv("DB_HOST", "mysql_eden_jardins_eden_mysql"),
+    'host': os.getenv("DB_HOST", "72.60.140.128"),
     'user': os.getenv("DB_USER", "eden"),
     'password': os.getenv("DB_PASSWORD", "eden2025@!"),
     'database': os.getenv("DB_NAME", "eden_db"),
-    'port': int(os.getenv("DB_PORT", "3306")),
+    'port': int(os.getenv("DB_PORT", "2621")),
     'charset': 'utf8mb4',
     'collation': 'utf8mb4_unicode_ci',
     'autocommit': True
@@ -32,7 +32,6 @@ def initialize_connection_pool():
     global connection_pool
     if connection_pool is None:
         try:
-            print(f"Inicializando pool com configurações: {DB_CONFIG}")
             connection_pool = pooling.MySQLConnectionPool(
                 pool_name="kealabs_pool",
                 pool_size=5,
