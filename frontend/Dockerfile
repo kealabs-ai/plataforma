@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11.2
 
 WORKDIR /app
 
@@ -11,9 +11,6 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Flask and production server
-RUN pip install --no-cache-dir flask flask-cors gunicorn
 
 # Copy application files
 COPY . .
@@ -28,5 +25,8 @@ EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8501 || exit 1
 
+# Set Python path
+ENV PYTHONPATH=/app
+
 # Start the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8501", "--workers", "2", "--timeout", "120", "app_flask:app"]
+CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:8501", "--workers", "2", "--timeout", "120", "app_flask:app"]
