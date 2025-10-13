@@ -10,6 +10,7 @@ pipeline {
         DOCKER_COMPOSE_FILE = 'docker-compose.yml'
         PROJECT_NAME = 'kealabs-intelligence'
         DOCKER_NETWORK = 'kealabs-network'
+        DOCKER_CONFIG = "${env.WORKSPACE}/.docker"
     }
 
     stages {
