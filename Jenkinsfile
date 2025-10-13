@@ -11,7 +11,9 @@ pipeline {
         PROJECT_NAME = 'kealabs-intelligence'
         DOCKER_NETWORK = 'kealabs-network'
         DOCKER_CONFIG = "${env.WORKSPACE}/.docker"
-        HOSTINGER_URL = 'meuprojeto.hostinger.com' // Altere para seu domínio ou IP real
+        HOSTINGER_URL = 'agro.kealabs.com.br' // Altere para seu domínio ou IP real
+        SERVER_IP = '72.60.140.128'     // Altere para seu IP ou domínio real
+        APP_PORT = '8502'                          // Altere para a porta do frontend
     }
 
     stages {
@@ -66,6 +68,7 @@ pipeline {
                     echo "Deploy de desenvolvimento concluído!"
                     echo "Acesse a API em: https://${HOSTINGER_URL}:8001"
                     echo "Acesse o Frontend em: https://${HOSTINGER_URL}:8502"
+                    echo "Aplicação disponível em: http://${env.SERVER_IP}:${env.APP_PORT}"
                 }
             }
         }
@@ -86,6 +89,7 @@ pipeline {
                     echo "Deploy de homologação concluído!"
                     echo "Acesse a API em: https://${HOSTINGER_URL}:8000"
                     echo "Acesse o Frontend em: https://${HOSTINGER_URL}:8501"
+                    echo "Aplicação disponível em: http://${env.SERVER_IP}:${env.APP_PORT}"
                 }
             }
         }
