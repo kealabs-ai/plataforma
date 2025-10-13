@@ -21,8 +21,8 @@ RUN groupadd docker || true
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Instala Flask e servidor de produção
-RUN pip install --no-cache-dir flask flask-cors gunicorn
+# Instala FastAPI e servidor de produção
+RUN pip install --no-cache-dir fastapi uvicorn[standard]
 
 # Copia os arquivos da aplicação
 COPY . .
@@ -31,11 +31,11 @@ COPY . .
 RUN chmod -R 755 /app
 
 # Expõe a porta da aplicação
-EXPOSE 8501
+EXPOSE 8000
 
 # Healthcheck para monitoramento
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8501 || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Comando de inicialização
-CMD ["gunicorn", "--bind", "0.0.0.0:8501", "--workers", "2", "--timeout", "120", "app_flask:app"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
