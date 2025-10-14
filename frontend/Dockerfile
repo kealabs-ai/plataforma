@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install Flask and Gunicorn
+RUN pip install --no-cache-dir flask flask-cors gunicorn
+
 # Copy application files
 COPY . .
 
@@ -28,5 +31,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 # Set environment variables
 ENV PYTHONPATH=/app
 
-# Start the application with Streamlit
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Start the application with Flask
+CMD ["gunicorn", "--bind", "0.0.0.0:8501", "--workers", "2", "--timeout", "120", "app_flask:app"]
