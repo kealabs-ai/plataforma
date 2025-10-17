@@ -33,8 +33,8 @@ services:
       - ./llms:/app/llms
       - ./agents:/app/agents
     environment:
-      - DB_HOST=${DB_HOST:-mysql_eden_jardins_eden_mysql}
-      - DB_PORT=${DB_PORT:-3306}
+      - DB_HOST=${DB_HOST:-72.60.140.128}
+      - DB_PORT=${DB_PORT:-2621}
       - DB_USER=${DB_USER:-eden}
       - DB_PASSWORD=${DB_PASSWORD:-eden2025@!}
       - DB_NAME=${DB_NAME:-eden_db}
