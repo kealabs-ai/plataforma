@@ -11,16 +11,20 @@ pipeline {
         PROJECT_NAME = 'kealabs-intelligence'
         DOCKER_NETWORK = 'kealabs-network'
         DOCKER_CONFIG = "${env.WORKSPACE}/.docker"
-        HOSTINGER_URL = 'agro.kealabs.com.br' // Altere para seu domínio ou IP real
-        SERVER_IP = '72.60.140.128'     // Altere para seu IP ou domínio real
-        APP_PORT = '8502'                          // Altere para a porta do frontend
+        HOSTINGER_URL = 'agro.kealabs.com.br'
+        SERVER_IP = '72.60.140.128'
+        APP_PORT = '8502'
     }
 
     stages {
         stage('Verificar Ambiente') {
             steps {
-                sh 'docker --version'
-                sh 'git --version || echo "Git não está disponível no container."'
+                script {
+                    sh 'mkdir -p "${DOCKER_CONFIG}" && chmod 700 "${DOCKER_CONFIG}"'
+                    sh 'echo "DOCKER_CONFIG -> ${DOCKER_CONFIG}"'
+                    sh 'docker --version'
+                    sh 'git --version || echo "Git não está disponível no container."'
+                }
             }
         }
 
@@ -45,9 +49,11 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    sh 'docker network create kealabs-network || true'
-                    sh 'docker build -t kealabs-api ./api'
-                    sh 'docker build -t kealabs-frontend ./frontend'
+                    // garante que DOCKER_CONFIG exista antes de usar docker
+                    sh 'mkdir -p "${DOCKER_CONFIG}" && chmod 700 "${DOCKER_CONFIG}"'
+                    sh 'docker network create ${DOCKER_NETWORK} || true'
+                    sh 'docker build --pull -t kealabs-api ./api'
+                    sh 'docker build --pull -t kealabs-frontend ./frontend'
                 }
             }
         }
@@ -61,9 +67,9 @@ pipeline {
                     sh 'cp .env.dev .env'
                     sh 'docker stop kealabs-api-dev kealabs-frontend-dev || true'
                     sh 'docker rm kealabs-api-dev kealabs-frontend-dev || true'
-                    sh '''docker run -d --name kealabs-api-dev --network kealabs-network \
+                    sh '''docker run -d --name kealabs-api-dev --network ${DOCKER_NETWORK} \
                         --env-file .env -p 8001:8000 --restart unless-stopped kealabs-api'''
-                    sh '''docker run -d --name kealabs-frontend-dev --network kealabs-network \
+                    sh '''docker run -d --name kealabs-frontend-dev --network ${DOCKER_NETWORK} \
                         --env-file .env -p 8502:8501 --restart unless-stopped kealabs-frontend'''
                     echo "Deploy de desenvolvimento concluído!"
                     echo "Acesse a API em: https://${HOSTINGER_URL}:8001"
@@ -82,9 +88,9 @@ pipeline {
                     sh 'cp .env.homolog .env'
                     sh 'docker stop kealabs-api-homolog kealabs-frontend-homolog || true'
                     sh 'docker rm kealabs-api-homolog kealabs-frontend-homolog || true'
-                    sh '''docker run -d --name kealabs-api-homolog --network kealabs-network \
+                    sh '''docker run -d --name kealabs-api-homolog --network ${DOCKER_NETWORK} \
                         --env-file .env -p 8000:8000 --restart unless-stopped kealabs-api'''
-                    sh '''docker run -d --name kealabs-frontend-homolog --network kealabs-network \
+                    sh '''docker run -d --name kealabs-frontend-homolog --network ${DOCKER_NETWORK} \
                         --env-file .env -p 8501:8501 --restart unless-stopped kealabs-frontend'''
                     echo "Deploy de homologação concluído!"
                     echo "Acesse a API em: https://${HOSTINGER_URL}:8000"
@@ -97,7 +103,7 @@ pipeline {
 
     post {
         always {
-            echo "Pipeline finalizado."
+            echo "Pipeline finalizado. DOCKER_CONFIG localizado em: ${DOCKER_CONFIG}"
         }
         failure {
             echo "Falha no pipeline. Verifique os logs."
