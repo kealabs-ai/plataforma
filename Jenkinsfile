@@ -75,6 +75,17 @@ pipeline {
                         sh 'if [ -f Dockerfile ]; then docker build --pull -t kealabs-frontend .; else echo "Dockerfile não encontrado em ./frontend"; exit 1; fi'
                     }
 
+                    // Build additional container if source exists
+                    dir('extra') {
+                        script {
+                            if (fileExists('Dockerfile')) {
+                                sh 'docker build --pull -t ${ADDITIONAL_CONTAINER_IMAGE} .'
+                            } else {
+                                echo "Pasta ./extra ou Dockerfile não encontrada; imagem adicional não será buildada."
+                            }
+                        }
+                    }
+
                     // sanity check
                     sh 'docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | grep -E "kealabs-api|kealabs-frontend" || true'
                 }
@@ -116,14 +127,24 @@ pipeline {
                         --env-file .env -p 8502:8501 --restart unless-stopped kealabs-frontend"""
 
                     // run additional container for dev with distinct host port
-                    sh """docker run -d --name ${ADDITIONAL_CONTAINER_NAME}-dev --network ${env.DOCKER_NETWORK} \
-                        --env-file .env -p ${ADDITIONAL_HOST_PORT}:${ADDITIONAL_CONTAINER_PORT} --restart unless-stopped ${ADDITIONAL_CONTAINER_IMAGE}"""
-
-                    echo "Deploy de desenvolvimento concluído!"
-                    echo "Acesse a API em: http://${env.HOSTINGER_URL}:8001"
-                    echo "Acesse o Frontend em: http://${env.HOSTINGER_URL}:8502"
-                    echo "Acesse serviço extra em: http://${env.HOSTINGER_URL}:${ADDITIONAL_HOST_PORT}"
-                    echo "Aplicação disponível em: http://${env.SERVER_IP}:${env.APP_PORT}"
+                    // antes de executar o run do container adicional
+                    script {
+                        def imgId = sh(returnStdout: true, script: "docker images -q ${env.ADDITIONAL_CONTAINER_IMAGE} || true").trim()
+                        if (!imgId) {
+                            echo "Imagem ${env.ADDITIONAL_CONTAINER_IMAGE} não encontrada localmente. Tentando docker pull..."
+                            // Se precisar auth, faça docker login antes (usar credentials)
+                            def pullStatus = sh(returnStatus: true, script: "docker pull ${env.ADDITIONAL_CONTAINER_IMAGE} || true")
+                            if (pullStatus != 0) {
+                                echo "Pull falhou; pulando deploy do container adicional."
+                            } else {
+                                echo "Pull bem-sucedido."
+                                sh "docker run -d --name ${env.ADDITIONAL_CONTAINER_NAME}-dev --network ${env.DOCKER_NETWORK} --env-file .env -p ${env.ADDITIONAL_HOST_PORT}:${env.ADDITIONAL_CONTAINER_PORT} --restart unless-stopped ${env.ADDITIONAL_CONTAINER_IMAGE}"
+                            }
+                        } else {
+                            echo "Imagem ${env.ADDITIONAL_CONTAINER_IMAGE} encontrada localmente."
+                            sh "docker run -d --name ${env.ADDITIONAL_CONTAINER_NAME}-dev --network ${env.DOCKER_NETWORK} --env-file .env -p ${env.ADDITIONAL_HOST_PORT}:${env.ADDITIONAL_CONTAINER_PORT} --restart unless-stopped ${env.ADDITIONAL_CONTAINER_IMAGE}"
+                        }
+                    }
                 }
             }
         }
