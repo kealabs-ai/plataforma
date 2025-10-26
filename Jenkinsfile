@@ -18,7 +18,7 @@ pipeline {
 
     options {
         timeout(time: 60, unit: 'MINUTES')
-        ansiColor('xterm')
+        // ansiColor('xterm') // removido: plugin/option não disponível no servidor
     }
 
     stages {
