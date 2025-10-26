@@ -11,9 +11,15 @@ pipeline {
         PROJECT_NAME = 'kealabs-intelligence'
         DOCKER_NETWORK = 'kealabs-network'
         DOCKER_CONFIG = "${env.WORKSPACE}/.docker"
-        HOSTINGER_URL = 'agro.kealabs.com.br'
+        HOSTINGER_URL = 'kealabs.cloud'
         SERVER_IP = '72.60.140.128'
         APP_PORT = '8502'
+
+        // Novo container adicional configurável
+        ADDITIONAL_CONTAINER_NAME = 'kealabs-extra'
+        ADDITIONAL_CONTAINER_IMAGE = 'kealabs-extra-image' // ajuste para a imagem real
+        ADDITIONAL_CONTAINER_PORT = '9000'   // porta interna do container
+        ADDITIONAL_HOST_PORT = '9003'        // porta exposta no host (distinta por ambiente)
     }
 
     options {
@@ -94,8 +100,8 @@ pipeline {
             steps {
                 script {
                     sh 'cp .env.dev .env || true'
-                    sh 'docker stop kealabs-api-dev kealabs-frontend-dev || true'
-                    sh 'docker rm -f kealabs-api-dev kealabs-frontend-dev || true'
+                    sh 'docker stop kealabs-api-dev kealabs-frontend-dev ${ADDITIONAL_CONTAINER_NAME}-dev || true'
+                    sh 'docker rm -f kealabs-api-dev kealabs-frontend-dev ${ADDITIONAL_CONTAINER_NAME}-dev || true'
 
                     sh """docker run -d --name kealabs-api-dev --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8001:8000 --restart unless-stopped kealabs-api"""
@@ -103,9 +109,14 @@ pipeline {
                     sh """docker run -d --name kealabs-frontend-dev --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8502:8501 --restart unless-stopped kealabs-frontend"""
 
+                    // run additional container for dev with distinct host port
+                    sh """docker run -d --name ${ADDITIONAL_CONTAINER_NAME}-dev --network ${env.DOCKER_NETWORK} \
+                        --env-file .env -p ${ADDITIONAL_HOST_PORT}:${ADDITIONAL_CONTAINER_PORT} --restart unless-stopped ${ADDITIONAL_CONTAINER_IMAGE}"""
+
                     echo "Deploy de desenvolvimento concluído!"
                     echo "Acesse a API em: http://${env.HOSTINGER_URL}:8001"
                     echo "Acesse o Frontend em: http://${env.HOSTINGER_URL}:8502"
+                    echo "Acesse serviço extra em: http://${env.HOSTINGER_URL}:${ADDITIONAL_HOST_PORT}"
                     echo "Aplicação disponível em: http://${env.SERVER_IP}:${env.APP_PORT}"
                 }
             }
@@ -116,8 +127,8 @@ pipeline {
             steps {
                 script {
                     sh 'cp .env.homolog .env || true'
-                    sh 'docker stop kealabs-api-homolog kealabs-frontend-homolog || true'
-                    sh 'docker rm -f kealabs-api-homolog kealabs-frontend-homolog || true'
+                    sh 'docker stop kealabs-api-homolog kealabs-frontend-homolog ${ADDITIONAL_CONTAINER_NAME}-homolog || true'
+                    sh 'docker rm -f kealabs-api-homolog kealabs-frontend-homolog ${ADDITIONAL_CONTAINER_NAME}-homolog || true'
 
                     sh """docker run -d --name kealabs-api-homolog --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8000:8000 --restart unless-stopped kealabs-api"""
@@ -125,9 +136,14 @@ pipeline {
                     sh """docker run -d --name kealabs-frontend-homolog --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8501:8501 --restart unless-stopped kealabs-frontend"""
 
+                    // run additional container for homolog with distinct host port (adjust if needed)
+                    sh """docker run -d --name ${ADDITIONAL_CONTAINER_NAME}-homolog --network ${env.DOCKER_NETWORK} \
+                        --env-file .env -p ${ADDITIONAL_HOST_PORT}:${ADDITIONAL_CONTAINER_PORT} --restart unless-stopped ${ADDITIONAL_CONTAINER_IMAGE}"""
+
                     echo "Deploy de homologação concluído!"
                     echo "Acesse a API em: http://${env.HOSTINGER_URL}:8000"
                     echo "Acesse o Frontend em: http://${env.HOSTINGER_URL}:8501"
+                    echo "Acesse serviço extra em: http://${env.HOSTINGER_URL}:${ADDITIONAL_HOST_PORT}"
                     echo "Aplicação disponível em: http://${env.SERVER_IP}:${env.APP_PORT}"
                 }
             }
@@ -138,6 +154,8 @@ pipeline {
         always {
             echo "Pipeline finalizado. DOCKER_CONFIG localizado em: ${env.DOCKER_CONFIG}"
             sh 'docker ps -a --filter "name=kealabs" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true'
+            // mostrar status do container adicional
+            sh "docker ps -a --filter \"name=${ADDITIONAL_CONTAINER_NAME}\" --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' || true"
         }
         failure {
             echo "Falha no pipeline. Verifique os logs."
