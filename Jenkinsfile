@@ -15,11 +15,11 @@ pipeline {
         SERVER_IP = '72.60.140.128'
         APP_PORT = '8502'
 
-        // Novo container adicional configurável
-        ADDITIONAL_CONTAINER_NAME = 'kealabs-extra'
-        ADDITIONAL_CONTAINER_IMAGE = 'kealabs-extra-image' // ajuste para a imagem real
-        ADDITIONAL_CONTAINER_PORT = '9000'   // porta interna do container
-        ADDITIONAL_HOST_PORT = '9003'        // porta exposta no host (distinta por ambiente)
+        // Container adicional desabilitado
+        // ADDITIONAL_CONTAINER_NAME = 'kealabs-extra'
+        // ADDITIONAL_CONTAINER_IMAGE = 'kealabs-extra-image'
+        // ADDITIONAL_CONTAINER_PORT = '9000'
+        // ADDITIONAL_HOST_PORT = '9003'
     }
 
     options {
@@ -75,16 +75,8 @@ pipeline {
                         sh 'if [ -f Dockerfile ]; then docker build --pull -t kealabs-frontend .; else echo "Dockerfile não encontrado em ./frontend"; exit 1; fi'
                     }
 
-                    // Build additional container if source exists
-                    dir('extra') {
-                        script {
-                            if (fileExists('Dockerfile')) {
-                                sh 'docker build --pull -t ${ADDITIONAL_CONTAINER_IMAGE} .'
-                            } else {
-                                echo "Pasta ./extra ou Dockerfile não encontrada; imagem adicional não será buildada."
-                            }
-                        }
-                    }
+                    // Build adicional desabilitado
+                    echo "Build de container adicional desabilitado"
 
                     // sanity check
                     sh 'docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | grep -E "kealabs-api|kealabs-frontend" || true'
@@ -117,8 +109,8 @@ pipeline {
             steps {
                 script {
                     sh 'cp .env.dev .env || true'
-                    sh 'docker stop kealabs-api-dev kealabs-frontend-dev ${ADDITIONAL_CONTAINER_NAME}-dev || true'
-                    sh 'docker rm -f kealabs-api-dev kealabs-frontend-dev ${ADDITIONAL_CONTAINER_NAME}-dev || true'
+                    sh 'docker stop kealabs-api-dev kealabs-frontend-dev || true'
+                    sh 'docker rm -f kealabs-api-dev kealabs-frontend-dev || true'
 
                     sh """docker run -d --name kealabs-api-dev --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8001:8000 --restart unless-stopped kealabs-api"""
@@ -126,25 +118,7 @@ pipeline {
                     sh """docker run -d --name kealabs-frontend-dev --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8502:8501 --restart unless-stopped kealabs-frontend"""
 
-                    // run additional container for dev with distinct host port
-                    // antes de executar o run do container adicional
-                    script {
-                        def imgId = sh(returnStdout: true, script: "docker images -q ${env.ADDITIONAL_CONTAINER_IMAGE} || true").trim()
-                        if (!imgId) {
-                            echo "Imagem ${env.ADDITIONAL_CONTAINER_IMAGE} não encontrada localmente. Tentando docker pull..."
-                            // Se precisar auth, faça docker login antes (usar credentials)
-                            def pullStatus = sh(returnStatus: true, script: "docker pull ${env.ADDITIONAL_CONTAINER_IMAGE} || true")
-                            if (pullStatus != 0) {
-                                echo "Pull falhou; pulando deploy do container adicional."
-                            } else {
-                                echo "Pull bem-sucedido."
-                                sh "docker run -d --name ${env.ADDITIONAL_CONTAINER_NAME}-dev --network ${env.DOCKER_NETWORK} --env-file .env -p ${env.ADDITIONAL_HOST_PORT}:${env.ADDITIONAL_CONTAINER_PORT} --restart unless-stopped ${env.ADDITIONAL_CONTAINER_IMAGE}"
-                            }
-                        } else {
-                            echo "Imagem ${env.ADDITIONAL_CONTAINER_IMAGE} encontrada localmente."
-                            sh "docker run -d --name ${env.ADDITIONAL_CONTAINER_NAME}-dev --network ${env.DOCKER_NETWORK} --env-file .env -p ${env.ADDITIONAL_HOST_PORT}:${env.ADDITIONAL_CONTAINER_PORT} --restart unless-stopped ${env.ADDITIONAL_CONTAINER_IMAGE}"
-                        }
-                    }
+                    echo "Deploy de desenvolvimento concluído"
                 }
             }
         }
@@ -160,8 +134,8 @@ pipeline {
             steps {
                 script {
                     sh 'cp .env.homolog .env || true'
-                    sh 'docker stop kealabs-api-homolog kealabs-frontend-homolog ${ADDITIONAL_CONTAINER_NAME}-homolog || true'
-                    sh 'docker rm -f kealabs-api-homolog kealabs-frontend-homolog ${ADDITIONAL_CONTAINER_NAME}-homolog || true'
+                    sh 'docker stop kealabs-api-homolog kealabs-frontend-homolog || true'
+                    sh 'docker rm -f kealabs-api-homolog kealabs-frontend-homolog || true'
 
                     sh """docker run -d --name kealabs-api-homolog --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8000:8000 --restart unless-stopped kealabs-api"""
@@ -169,11 +143,7 @@ pipeline {
                     sh """docker run -d --name kealabs-frontend-homolog --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8501:8501 --restart unless-stopped kealabs-frontend"""
 
-                    // run additional container for homolog with distinct host port (adjust if needed)
-                    sh """docker run -d --name ${ADDITIONAL_CONTAINER_NAME}-homolog --network ${env.DOCKER_NETWORK} \
-                        --env-file .env -p ${ADDITIONAL_HOST_PORT}:${ADDITIONAL_CONTAINER_PORT} --restart unless-stopped ${ADDITIONAL_CONTAINER_IMAGE}"""
-
-                    echo "Deploy de homologação concluído!"
+                    echo "Deploy de homologação concluído"ologação concluído!"
                     echo "Acesse a API em: http://${env.HOSTINGER_URL}:8000"
                     echo "Acesse o Frontend em: http://${env.HOSTINGER_URL}:8501"
                     echo "Acesse serviço extra em: http://${env.HOSTINGER_URL}:${ADDITIONAL_HOST_PORT}"
