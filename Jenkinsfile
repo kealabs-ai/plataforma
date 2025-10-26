@@ -96,7 +96,13 @@ pipeline {
         }
 
         stage('Deploy - Desenvolvimento') {
-            when { branch 'develop' }
+            when {
+                expression {
+                    return (env.BRANCH_NAME == 'develop') ||
+                           (env.GIT_BRANCH != null && env.GIT_BRANCH.contains('develop')) ||
+                           (env.BRANCH_NAME == null && params.DEPLOY_ENV == 'develop')
+                }
+            }
             steps {
                 script {
                     sh 'cp .env.dev .env || true'
@@ -123,7 +129,13 @@ pipeline {
         }
 
         stage('Deploy - Homologação') {
-            when { branch 'main' }
+            when {
+                expression {
+                    return (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'hml') ||
+                           (env.GIT_BRANCH != null && (env.GIT_BRANCH.contains('main') || env.GIT_BRANCH.contains('master') || env.GIT_BRANCH.contains('hml'))) ||
+                           (env.BRANCH_NAME == null && params.DEPLOY_ENV == 'homolog')
+                }
+            }
             steps {
                 script {
                     sh 'cp .env.homolog .env || true'
