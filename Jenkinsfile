@@ -143,10 +143,9 @@ pipeline {
                     sh """docker run -d --name kealabs-frontend-homolog --network ${env.DOCKER_NETWORK} \
                         --env-file .env -p 8501:8501 --restart unless-stopped kealabs-frontend"""
 
-                    echo "Deploy de homologação concluído"ologação concluído!"
+                    echo "Deploy de homologação concluído!"
                     echo "Acesse a API em: http://${env.HOSTINGER_URL}:8000"
                     echo "Acesse o Frontend em: http://${env.HOSTINGER_URL}:8501"
-                    echo "Acesse serviço extra em: http://${env.HOSTINGER_URL}:${ADDITIONAL_HOST_PORT}"
                     echo "Aplicação disponível em: http://${env.SERVER_IP}:${env.APP_PORT}"
                 }
             }
@@ -157,8 +156,7 @@ pipeline {
         always {
             echo "Pipeline finalizado. DOCKER_CONFIG localizado em: ${env.DOCKER_CONFIG}"
             sh 'docker ps -a --filter "name=kealabs" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true'
-            // mostrar status do container adicional
-            sh "docker ps -a --filter \"name=${ADDITIONAL_CONTAINER_NAME}\" --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' || true"
+            // Container adicional desabilitado
         }
         failure {
             echo "Falha no pipeline. Verifique os logs."
